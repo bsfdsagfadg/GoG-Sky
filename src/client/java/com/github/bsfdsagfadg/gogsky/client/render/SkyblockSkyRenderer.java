@@ -106,10 +106,9 @@ public class SkyblockSkyRenderer {
 		float rotSpeedMod = 0.4F;
 
 		for (int p = 0; p < 3; p++) {
-			float currentTicks = ClientTickHandler.ticksInGame + partialTicks;
-			float baseAngle = rotSpeed * rotSpeedMod * currentTicks;
+			float baseAngle = rotSpeed * rotSpeedMod * ClientTickHandler.total();
 			ms.pushPose();
-			ms.mulPose(VecHelper.rotateY(currentTicks * 0.25F * rotSpeed * rotSpeedMod));
+			ms.mulPose(VecHelper.rotateY(ClientTickHandler.total() * 0.25F * rotSpeed * rotSpeedMod));
 
 			int rayColor = rayBaseColor;
 			if (p == 1) rayColor = ARGB.color((int) (a * 255), 255, 102, 102);
@@ -205,17 +204,17 @@ public class SkyblockSkyRenderer {
 
 		if (alpha <= 0) return;
 
-		float t = (ClientTickHandler.ticksInGame + partialTicks + 2000) * 0.005F;
+		float t = (ClientTickHandler.total() + 2000) * 0.005F;
 
 		// Botania renders 6 layers of stars with different rotations and colors
 		// Star colors in legacy: (R, G, B, Alpha)
-		drawStarLayer(starBuffer, starIndices, starIndexCount, starIndexBuffer, ms, new Quaternionf().rotateY(t * 3), new Vector4f(alpha, alpha, alpha, alpha), "Stars 1");
-		drawStarLayer(starBuffer, starIndices, starIndexCount, starIndexBuffer, ms, new Quaternionf().rotateY(t * 1), new Vector4f(0.5f * alpha, alpha, alpha, alpha), "Stars 2");
-		drawStarLayer(starBuffer, starIndices, starIndexCount, starIndexBuffer, ms, new Quaternionf().rotateY(t * 2), new Vector4f(alpha, 0.75f * alpha, 0.75f * alpha, alpha), "Stars 3");
+		drawStarLayer(starBuffer, starIndices, starIndexCount, starIndexBuffer, ms, VecHelper.rotateY(t * 3), new Vector4f(alpha, alpha, alpha, alpha), "Stars 1");
+		drawStarLayer(starBuffer, starIndices, starIndexCount, starIndexBuffer, ms, VecHelper.rotateY(t * 1), new Vector4f(0.5f * alpha, alpha, alpha, alpha), "Stars 2");
+		drawStarLayer(starBuffer, starIndices, starIndexCount, starIndexBuffer, ms, VecHelper.rotateY(t * 2), new Vector4f(alpha, 0.75f * alpha, 0.75f * alpha, alpha), "Stars 3");
 
-		drawStarLayer(starBuffer, starIndices, starIndexCount, starIndexBuffer, ms, new Quaternionf().rotateZ(t * 3), new Vector4f(alpha, alpha, alpha, 0.25f * alpha), "Stars 4");
-		drawStarLayer(starBuffer, starIndices, starIndexCount, starIndexBuffer, ms, new Quaternionf().rotateZ(t * 1), new Vector4f(0.5f * alpha, alpha, alpha, 0.25f * alpha), "Stars 5");
-		drawStarLayer(starBuffer, starIndices, starIndexCount, starIndexBuffer, ms, new Quaternionf().rotateZ(t * 2), new Vector4f(alpha, 0.75f * alpha, 0.75f * alpha, 0.25f * alpha), "Stars 6");
+		drawStarLayer(starBuffer, starIndices, starIndexCount, starIndexBuffer, ms, VecHelper.rotateZ(t * 3), new Vector4f(alpha, alpha, alpha, 0.25f * alpha), "Stars 4");
+		drawStarLayer(starBuffer, starIndices, starIndexCount, starIndexBuffer, ms, VecHelper.rotateZ(t * 1), new Vector4f(0.5f * alpha, alpha, alpha, 0.25f * alpha), "Stars 5");
+		drawStarLayer(starBuffer, starIndices, starIndexCount, starIndexBuffer, ms, VecHelper.rotateZ(t * 2), new Vector4f(alpha, 0.75f * alpha, 0.75f * alpha, 0.25f * alpha), "Stars 6");
 	}
 
 	private static void drawStarLayer(GpuBuffer starBuffer, GpuBuffer starIndices, int starIndexCount, RenderSystem.AutoStorageIndexBuffer starIndexBuffer, PoseStack ms, Quaternionf rotation, Vector4f color, String name) {

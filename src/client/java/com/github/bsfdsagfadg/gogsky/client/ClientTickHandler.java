@@ -6,6 +6,10 @@ public class ClientTickHandler {
     public static int ticksInGame = 0;
     public static float partialTicks = 0;
 
+    public static float total() {
+        return ticksInGame + partialTicks;
+    }
+
     public static void init() {
         ClientTickEvents.END_CLIENT_TICK.register(client -> {
             if (!client.isPaused()) {
