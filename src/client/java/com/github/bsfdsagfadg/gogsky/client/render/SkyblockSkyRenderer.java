@@ -2,16 +2,28 @@ package com.github.bsfdsagfadg.gogsky.client.render;
 
 import com.github.bsfdsagfadg.gogsky.client.ClientTickHandler;
 import com.github.bsfdsagfadg.gogsky.client.util.VecHelper;
+import com.mojang.blaze3d.buffers.GpuBuffer;
+import com.mojang.blaze3d.pipeline.RenderPipeline;
+import com.mojang.blaze3d.systems.RenderPass;
+import com.mojang.blaze3d.systems.RenderSystem;
+import com.mojang.blaze3d.textures.GpuTextureView;
 import com.mojang.blaze3d.vertex.PoseStack;
 import com.mojang.blaze3d.vertex.VertexConsumer;
+import net.minecraft.client.Minecraft;
 import net.minecraft.client.multiplayer.ClientLevel;
 import net.minecraft.client.renderer.MultiBufferSource;
 import net.minecraft.client.renderer.RenderType;
+import net.minecraft.client.renderer.RenderPipelines;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.util.ARGB;
 import org.joml.Matrix4f;
+import org.joml.Matrix4fStack;
 import org.joml.Quaternionf;
+import org.joml.Vector3f;
+import org.joml.Vector4f;
 
+import java.util.OptionalDouble;
+import java.util.OptionalInt;
 import java.util.Random;
 
 public class SkyblockSkyRenderer {
@@ -100,8 +112,8 @@ public class SkyblockSkyRenderer {
 			ms.mulPose(VecHelper.rotateY(currentTicks * 0.25F * rotSpeed * rotSpeedMod));
 
 			int rayColor = rayBaseColor;
-			if (p == 1) rayColor = ARGB.color((int)(a * 255), 255, 102, 102); // 1F, 0.4F, 0.4F
-			if (p == 2) rayColor = ARGB.color((int)(a * 255), 102, 25, 178); // 0.4F, 1F, 0.7F
+			if (p == 1) rayColor = ARGB.color((int) (a * 255), 255, 102, 102);
+			if (p == 2) rayColor = ARGB.color((int) (a * 255), 102, 255, 178);
 
 			VertexConsumer consumer = bufferSource.getBuffer(RenderType.celestial(textureSkybox));
 			Matrix4f mat = ms.last().pose();
@@ -148,7 +160,7 @@ public class SkyblockSkyRenderer {
 		}
 		effCelAng1 = 0.25F - Math.min(0.25F, effCelAng1);
 
-		long time = world.getDayTime() + 100;
+		long time = world.getDayTime() + 1000;
 		int day = (int) (time / 24000L);
 		Random rand = new Random(day * 0xFF);
 		float angle1 = rand.nextFloat() * 360F;
@@ -179,5 +191,59 @@ public class SkyblockSkyRenderer {
 			}
 		}
 		ms.popPose();
+	}
+
+	public static void renderStars(GpuBuffer starBuffer, GpuBuffer starIndices, int starIndexCount, RenderSystem.AutoStorageIndexBuffer starIndexBuffer, PoseStack ms, float partialTicks) {
+		Minecraft mc = Minecraft.getInstance();
+		float rain = 1.0F - mc.level.getRainLevel(partialTicks);
+		float celAng = mc.level.getTimeOfDay(partialTicks);
+		float effCelAng = celAng;
+		if (celAng > 0.5) {
+			effCelAng = 0.5F - (celAng - 0.5F);
+		}
+		float alpha = rain * Math.max(0.1F, effCelAng * 2);
+
+		if (alpha <= 0) return;
+
+		float t = (ClientTickHandler.ticksInGame + partialTicks + 2000) * 0.005F;
+
+		// Botania renders 6 layers of stars with different rotations and colors
+		// Star colors in legacy: (R, G, B, Alpha)
+		drawStarLayer(starBuffer, starIndices, starIndexCount, starIndexBuffer, ms, new Quaternionf().rotateY(t * 3), new Vector4f(alpha, alpha, alpha, alpha), "Stars 1");
+		drawStarLayer(starBuffer, starIndices, starIndexCount, starIndexBuffer, ms, new Quaternionf().rotateY(t * 1), new Vector4f(0.5f * alpha, alpha, alpha, alpha), "Stars 2");
+		drawStarLayer(starBuffer, starIndices, starIndexCount, starIndexBuffer, ms, new Quaternionf().rotateY(t * 2), new Vector4f(alpha, 0.75f * alpha, 0.75f * alpha, alpha), "Stars 3");
+
+		drawStarLayer(starBuffer, starIndices, starIndexCount, starIndexBuffer, ms, new Quaternionf().rotateZ(t * 3), new Vector4f(alpha, alpha, alpha, 0.25f * alpha), "Stars 4");
+		drawStarLayer(starBuffer, starIndices, starIndexCount, starIndexBuffer, ms, new Quaternionf().rotateZ(t * 1), new Vector4f(0.5f * alpha, alpha, alpha, 0.25f * alpha), "Stars 5");
+		drawStarLayer(starBuffer, starIndices, starIndexCount, starIndexBuffer, ms, new Quaternionf().rotateZ(t * 2), new Vector4f(alpha, 0.75f * alpha, 0.75f * alpha, 0.25f * alpha), "Stars 6");
+	}
+
+	private static void drawStarLayer(GpuBuffer starBuffer, GpuBuffer starIndices, int starIndexCount, RenderSystem.AutoStorageIndexBuffer starIndexBuffer, PoseStack ms, Quaternionf rotation, Vector4f color, String name) {
+		Matrix4fStack matrix4fStack = RenderSystem.getModelViewStack();
+		matrix4fStack.pushMatrix();
+		matrix4fStack.mul(ms.last().pose());
+		matrix4fStack.rotate(rotation);
+
+		RenderPipeline renderPipeline = RenderPipelines.STARS;
+		GpuTextureView gpuTextureView = Minecraft.getInstance().getMainRenderTarget().getColorTextureView();
+		GpuTextureView gpuTextureView2 = Minecraft.getInstance().getMainRenderTarget().getDepthTextureView();
+		
+		var gpuBufferSlice = RenderSystem.getDynamicUniforms().writeTransform(matrix4fStack, color, new Vector3f(), new Matrix4f(), 0.0F);
+		
+		RenderPass renderPass = RenderSystem.getDevice().createCommandEncoder().createRenderPass(() -> name, gpuTextureView, OptionalInt.empty(), gpuTextureView2, OptionalDouble.empty());
+
+		try {
+			renderPass.setPipeline(renderPipeline);
+			RenderSystem.bindDefaultUniforms(renderPass);
+			renderPass.setUniform("DynamicTransforms", gpuBufferSlice);
+			renderPass.setVertexBuffer(0, starBuffer);
+			renderPass.setIndexBuffer(starIndices, starIndexBuffer.type());
+			renderPass.drawIndexed(0, 0, starIndexCount, 1);
+		} finally {
+			if (renderPass != null) {
+				renderPass.close();
+			}
+		}
+		matrix4fStack.popMatrix();
 	}
 }
