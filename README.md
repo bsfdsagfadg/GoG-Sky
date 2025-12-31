@@ -4,8 +4,6 @@
 
 This mod brings the breathtaking celestial visuals—including vibrant planets, auroras, and extra stars—to **Fabric 1.21.8** without needing the full Botania mod installed.
 
-![Skybox Screenshot](https://raw.githubusercontent.com/Vazkii/Botania/master/web/img/gallery/skybox.jpg)
-*(Credit: Botania)*
 
 ## ✨ Features
 
