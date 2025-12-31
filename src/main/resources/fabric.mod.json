@@ -1,41 +1,37 @@
 {
 	"schemaVersion": 1,
-	"id": "modid",
+	"id": "gog-sky",
 	"version": "${version}",
-	"name": "Example mod",
-	"description": "This is an example description! Tell everyone what your mod is about!",
+	"name": "GoG Sky",
+	"description": "A standalone port of the Garden of Glass skybox from Botania.",
 	"authors": [
-		"Me!"
+		"bsfdsagfadg",
+		"Vazkii (Original Author)"
 	],
 	"contact": {
-		"homepage": "https://fabricmc.net/",
-		"sources": "https://github.com/FabricMC/fabric-example-mod"
+		"homepage": "https://github.com/bsfdsagfadg/gog-sky",
+		"sources": "https://github.com/bsfdsagfadg/gog-sky"
 	},
-	"license": "CC0-1.0",
-	"icon": "assets/modid/icon.png",
-	"environment": "*",
+	"license": "Botania License",
+	"icon": "assets/gog-sky/icon.png",
+	"environment": "client",
 	"entrypoints": {
-		"main": [
-			"com.example.ExampleMod"
-		],
 		"client": [
-			"com.example.ExampleModClient"
+			"com.github.bsfdsagfadg.gogsky.client.GogSkyClient"
 		]
 	},
 	"mixins": [
-		"modid.mixins.json",
 		{
-			"config": "modid.client.mixins.json",
+			"config": "gog-sky.client.mixins.json",
 			"environment": "client"
 		}
 	],
 	"depends": {
-		"fabricloader": ">=0.18.2",
-		"minecraft": "~1.21.11",
+		"fabricloader": ">=0.18.4",
+		"minecraft": "~1.21.8",
 		"java": ">=21",
 		"fabric-api": "*"
 	},
 	"suggests": {
-		"another-mod": "*"
 	}
 }
