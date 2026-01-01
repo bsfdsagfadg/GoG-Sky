@@ -26,6 +26,11 @@ import java.util.OptionalDouble;
 import java.util.OptionalInt;
 import java.util.Random;
 
+/**
+ * 水晶花园天空渲染器
+ * 适配自 Botania (植物魔法) 的 Garden of Glass 天空效果。
+ * 针对 Minecraft 1.21.8 的 Blaze3D Next 渲染引擎进行了重写，使用了现代的缓冲渲染 API。
+ */
 public class SkyblockSkyRenderer {
 
 	private static final ResourceLocation textureSkybox = ResourceLocation.fromNamespaceAndPath("gog-sky", "textures/environment/skybox.png");
@@ -39,6 +44,15 @@ public class SkyblockSkyRenderer {
 			ResourceLocation.fromNamespaceAndPath("gog-sky", "textures/environment/planet5.png")
 	};
 
+	/**
+	 * 渲染额外的大气效果（行星、极光、彩虹）
+	 * 
+	 * @param ms 姿态堆栈
+	 * @param bufferSource 缓冲源
+	 * @param world 客户端世界
+	 * @param partialTicks 帧内插值时间
+	 * @param insideVoid 虚空深度透明度修正
+	 */
 	public static void renderExtra(PoseStack ms, MultiBufferSource bufferSource, ClientLevel world, float partialTicks, float insideVoid) {
 		float rain = 1.0F - world.getRainLevel(partialTicks);
 		float celAng = world.getTimeOfDay(partialTicks);
@@ -47,7 +61,7 @@ public class SkyblockSkyRenderer {
 			effCelAng = 0.5F - (celAng - 0.5F);
 		}
 
-		// === Planets
+		// --- 渲染行星 ---
 		float scale = 20F;
 		float lowA = Math.max(0F, effCelAng - 0.3F) * rain;
 		float a = Math.max(0.1F, lowA);
@@ -88,7 +102,7 @@ public class SkyblockSkyRenderer {
 		}
 		ms.popPose();
 
-		// === Rays
+		// --- 渲染极光/光带 (Rays) ---
 		scale = 20F;
 		a = lowA;
 		int rayBaseColor = ARGB.white(a);
@@ -149,7 +163,7 @@ public class SkyblockSkyRenderer {
 		}
 		ms.popPose();
 
-		// === Rainbow
+		// --- 渲染彩虹 (Rainbow) ---
 		ms.pushPose();
 		float effCelAng1 = celAng;
 		if (effCelAng1 > 0.25F) {
@@ -190,6 +204,10 @@ public class SkyblockSkyRenderer {
 		ms.popPose();
 	}
 
+	/**
+	 * 渲染多层旋转星空
+	 * 针对 1.21.8 的 WebGPU-like 架构，通过 RenderPass 实现多层渲染叠加。
+	 */
 	public static void renderStars(GpuBuffer starBuffer, GpuBuffer starIndices, int starIndexCount, RenderSystem.AutoStorageIndexBuffer starIndexBuffer, PoseStack ms, float partialTicks) {
 		Minecraft mc = Minecraft.getInstance();
 		float rain = 1.0F - mc.level.getRainLevel(partialTicks);
@@ -204,8 +222,7 @@ public class SkyblockSkyRenderer {
 
 		float t = (ClientTickHandler.total() + 2000) * 0.005F;
 
-		// Botania renders 6 layers of stars with different rotations and colors
-		// Star colors in legacy: (R, G, B, Alpha)
+		// 植物魔法原版通过 6 层不同旋转和颜色的星星 VBO 叠加实现深邃感
 		drawStarLayer(starBuffer, starIndices, starIndexCount, starIndexBuffer, ms, VecHelper.rotateY(t * 3), new Vector4f(alpha, alpha, alpha, alpha), "Stars 1");
 		drawStarLayer(starBuffer, starIndices, starIndexCount, starIndexBuffer, ms, VecHelper.rotateY(t * 1), new Vector4f(0.5f * alpha, alpha, alpha, alpha), "Stars 2");
 		drawStarLayer(starBuffer, starIndices, starIndexCount, starIndexBuffer, ms, VecHelper.rotateY(t * 2), new Vector4f(alpha, 0.75f * alpha, 0.75f * alpha, alpha), "Stars 3");
@@ -215,6 +232,9 @@ public class SkyblockSkyRenderer {
 		drawStarLayer(starBuffer, starIndices, starIndexCount, starIndexBuffer, ms, VecHelper.rotateZ(t * 2), new Vector4f(alpha, 0.75f * alpha, 0.75f * alpha, 0.25f * alpha), "Stars 6");
 	}
 
+	/**
+	 * 绘制单层星星
+	 */
 	private static void drawStarLayer(GpuBuffer starBuffer, GpuBuffer starIndices, int starIndexCount, RenderSystem.AutoStorageIndexBuffer starIndexBuffer, PoseStack ms, Quaternionf rotation, Vector4f color, String name) {
 		Matrix4fStack matrix4fStack = RenderSystem.getModelViewStack();
 		matrix4fStack.pushMatrix();

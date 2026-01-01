@@ -7,6 +7,9 @@ import net.minecraft.world.phys.Vec3;
 
 import org.joml.Quaternionf;
 
+/**
+ * 向量与矩阵运算工具类
+ */
 public class VecHelper {
 	public static final Vec3 ONE = new Vec3(1, 1, 1);
 
