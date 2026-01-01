@@ -107,7 +107,6 @@ public class SkyblockSkyRenderer {
 
 		for (int p = 0; p < 3; p++) {
 			float baseAngle = rotSpeed * rotSpeedMod * ClientTickHandler.total();
-			ms.pushPose();
 			ms.mulPose(VecHelper.rotateY(ClientTickHandler.total() * 0.25F * rotSpeed * rotSpeedMod));
 
 			int rayColor = rayBaseColor;
@@ -134,7 +133,6 @@ public class SkyblockSkyRenderer {
 					consumer.addVertex(mat, xp, yo + y0 + y, zp).setUv(ut, 1F).setColor(rayColor);
 				}
 			}
-			ms.popPose();
 
 			switch (p) {
 				case 0 -> {
