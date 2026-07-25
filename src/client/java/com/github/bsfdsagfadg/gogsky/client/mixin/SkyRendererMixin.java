@@ -30,12 +30,11 @@ public abstract class SkyRendererMixin {
     /**
      * 在渲染太阳、月亮和星星之前注入额外的大气效果（行星、极光、彩虹）
     @Inject(method = "renderSunMoonAndStars", at = @At("HEAD"))
-    private void onRenderSunMoonAndStars(PoseStack poseStack, float f, int i, float g, float h, CallbackInfo ci) {
+    private void onRenderExtra(PoseStack poseStack, float f, int i, float g, float h, CallbackInfo ci) {
         Minecraft mc = Minecraft.getInstance();
         if (GogSkyConfig.isEnabled(mc.level)) {
             MultiBufferSource.BufferSource bufferSource = MultiBufferSource.immediate(Tesselator.getInstance().buffer);
             SkyblockSkyRenderer.renderExtra(poseStack, bufferSource, mc.level, f, 0);
-            bufferSource.endBatch();
         }
     }
 

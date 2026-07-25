@@ -48,7 +48,7 @@ public class SkyblockSkyRenderer {
 		return CompositeRenderType.create(
 			"gog_sky_celestial",
 			256,
-			RenderPipelines.CELESTIAL,
+			RenderPipelines.STARS,
 			state
 		);
 	}
