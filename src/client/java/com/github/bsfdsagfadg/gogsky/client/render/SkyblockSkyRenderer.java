@@ -2,9 +2,6 @@ package com.github.bsfdsagfadg.gogsky.client.render;
 
 import com.github.bsfdsagfadg.gogsky.client.ClientTickHandler;
 import com.github.bsfdsagfadg.gogsky.client.util.VecHelper;
-import com.mojang.blaze3d.buffers.GpuBuffer;
-import com.mojang.blaze3d.pipeline.RenderPipeline;
-import com.mojang.blaze3d.systems.RenderPass;
 import com.mojang.blaze3d.systems.RenderSystem;
 import com.mojang.blaze3d.vertex.PoseStack;
 import com.mojang.blaze3d.vertex.VertexConsumer;
@@ -12,23 +9,15 @@ import net.minecraft.client.Minecraft;
 import net.minecraft.client.multiplayer.ClientLevel;
 import net.minecraft.client.renderer.MultiBufferSource;
 import net.minecraft.client.renderer.RenderType;
-import net.minecraft.client.renderer.RenderPipelines;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.util.ARGB;
 import org.joml.Matrix4f;
-import org.joml.Matrix4fStack;
 import org.joml.Quaternionf;
-import org.joml.Vector3f;
-import org.joml.Vector4f;
 
-import java.util.OptionalDouble;
-import java.util.OptionalInt;
 import java.util.Random;
 
 /**
- * 水晶花园天空渲染器
- * 适配自 Botania (植物魔法) 的 Garden of Glass 天空效果。
- * 针对 Minecraft 1.21.8 的 Blaze3D Next 渲染引擎进行了重写，使用了现代的缓冲渲染 API。
+ * 水晶花园天空渲染器 (1.21.4 - 旧渲染 API，仅行星/极光/彩虹)
  */
 public class SkyblockSkyRenderer {
 
@@ -43,15 +32,6 @@ public class SkyblockSkyRenderer {
 			ResourceLocation.fromNamespaceAndPath("gog-sky", "textures/environment/planet5.png")
 	};
 
-	/**
-	 * 渲染额外的大气效果（行星、极光、彩虹）
-	 * 
-	 * @param ms 姿态堆栈
-	 * @param bufferSource 缓冲源
-	 * @param world 客户端世界
-	 * @param partialTicks 帧内插值时间
-	 * @param insideVoid 虚空深度透明度修正
-	 */
 	public static void renderExtra(PoseStack ms, MultiBufferSource bufferSource, ClientLevel world, float partialTicks, float insideVoid) {
 		float rain = 1.0F - world.getRainLevel(partialTicks);
 		float celAng = world.getTimeOfDay(partialTicks);
@@ -202,62 +182,4 @@ public class SkyblockSkyRenderer {
 		}
 		ms.popPose();
 	}
-
-	/**
-	 * 渲染多层旋转星空
-	 * 针对 1.21.8 的 WebGPU-like 架构，通过 RenderPass 实现多层渲染叠加。
-	 */
-	public static void renderStars(GpuBuffer starBuffer, GpuBuffer starIndices, int starIndexCount, RenderSystem.AutoStorageIndexBuffer starIndexBuffer, PoseStack ms, float partialTicks) {
-		Minecraft mc = Minecraft.getInstance();
-		float rain = 1.0F - mc.level.getRainLevel(partialTicks);
-		float celAng = mc.level.getTimeOfDay(partialTicks);
-		float effCelAng = celAng;
-		if (celAng > 0.5) {
-			effCelAng = 0.5F - (celAng - 0.5F);
-		}
-		float alpha = rain * Math.max(0.1F, effCelAng * 2);
-
-		if (alpha <= 0) return;
-
-		float t = (ClientTickHandler.total() + 2000) * 0.005F;
-
-		// 植物魔法原版通过 6 层不同旋转和颜色的星星 VBO 叠加实现深邃感
-		drawStarLayer(starBuffer, starIndices, starIndexCount, starIndexBuffer, ms, VecHelper.rotateY(t * 3), new Vector4f(alpha, alpha, alpha, alpha), "Stars 1");
-		drawStarLayer(starBuffer, starIndices, starIndexCount, starIndexBuffer, ms, VecHelper.rotateY(t * 1), new Vector4f(0.5f * alpha, alpha, alpha, alpha), "Stars 2");
-		drawStarLayer(starBuffer, starIndices, starIndexCount, starIndexBuffer, ms, VecHelper.rotateY(t * 2), new Vector4f(alpha, 0.75f * alpha, 0.75f * alpha, alpha), "Stars 3");
-
-		drawStarLayer(starBuffer, starIndices, starIndexCount, starIndexBuffer, ms, VecHelper.rotateZ(t * 3), new Vector4f(alpha, alpha, alpha, 0.25f * alpha), "Stars 4");
-		drawStarLayer(starBuffer, starIndices, starIndexCount, starIndexBuffer, ms, VecHelper.rotateZ(t * 1), new Vector4f(0.5f * alpha, alpha, alpha, 0.25f * alpha), "Stars 5");
-		drawStarLayer(starBuffer, starIndices, starIndexCount, starIndexBuffer, ms, VecHelper.rotateZ(t * 2), new Vector4f(alpha, 0.75f * alpha, 0.75f * alpha, 0.25f * alpha), "Stars 6");
-	}
-
-	/**
-	 * 绘制单层星星 (1.21.5 旧 API: 无 DynamicUniforms, 用 setShaderColor)
-	 */
-	private static void drawStarLayer(GpuBuffer starBuffer, GpuBuffer starIndices, int starIndexCount, RenderSystem.AutoStorageIndexBuffer starIndexBuffer, PoseStack ms, Quaternionf rotation, Vector4f color, String name) {
-		Matrix4fStack matrix4fStack = RenderSystem.getModelViewStack();
-		matrix4fStack.pushMatrix();
-		matrix4fStack.mul(ms.last().pose());
-		matrix4fStack.rotate(rotation);
-
-		RenderPipeline renderPipeline = RenderPipelines.STARS;
-		var gpuTexture = Minecraft.getInstance().getMainRenderTarget().getColorTexture();
-		var gpuDepthTexture = Minecraft.getInstance().getMainRenderTarget().getDepthTexture();
-		
-		RenderSystem.setShaderColor(color.x, color.y, color.z, color.w);
-		
-		RenderPass renderPass = RenderSystem.getDevice().createCommandEncoder().createRenderPass(gpuTexture, OptionalInt.empty(), gpuDepthTexture, OptionalDouble.empty());
-
-		try {
-			renderPass.setPipeline(renderPipeline);
-			renderPass.setVertexBuffer(0, starBuffer);
-			renderPass.setIndexBuffer(starIndices, starIndexBuffer.type());
-			renderPass.drawIndexed(0, starIndexCount);
-		} finally {
-			if (renderPass != null) {
-				renderPass.close();
-			}
-		}
-		matrix4fStack.popMatrix();
-}
 }
