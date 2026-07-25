@@ -87,6 +87,7 @@ public class SkyblockSkyRenderer {
 		float a = Math.max(0.1F, lowA);
 		int planetColor = ARGB.white(a * 4 * (1F - insideVoid));
 
+		com.mojang.blaze3d.opengl.GlStateManager._enableBlend();
 		ms.pushPose();
 		ms.mulPose(new Quaternionf().rotateAxis(VecHelper.toRadians(90), 0.5F, 0.5F, 0F));
 		for (int p = 0; p < planetTextures.length; p++) {
@@ -126,8 +127,8 @@ public class SkyblockSkyRenderer {
 		scale = 20F;
 		a = lowA;
 		int rayBaseColor = ARGB.white(a);
+		com.mojang.blaze3d.opengl.GlStateManager._blendFuncSeparate(770, 1, 1, 0);
 		ms.pushPose();
-		ms.translate(0, -1, 0);
 		ms.mulPose(VecHelper.rotateX(220));
 		
 		int angles = 90;
@@ -182,8 +183,10 @@ public class SkyblockSkyRenderer {
 			}
 		}
 		ms.popPose();
+		com.mojang.blaze3d.opengl.GlStateManager._blendFuncSeparate(770, 771, 1, 0);
 
 		// --- 渲染彩虹 (Rainbow) ---
+		com.mojang.blaze3d.opengl.GlStateManager._enableBlend();
 		ms.pushPose();
 		float effCelAng1 = celAng;
 		if (effCelAng1 > 0.25F) {
