@@ -13,9 +13,8 @@ import net.minecraft.client.Minecraft;
 import net.minecraft.client.multiplayer.ClientLevel;
 import net.minecraft.client.renderer.MultiBufferSource;
 import net.minecraft.client.renderer.RenderPipelines;
-import net.minecraft.client.renderer.rendertype.RenderTypes;
-import net.minecraft.client.renderer.LightTexture;
-import net.minecraft.client.renderer.texture.OverlayTexture;
+import net.minecraft.client.renderer.rendertype.RenderSetup;
+import net.minecraft.client.renderer.rendertype.RenderType;
 import net.minecraft.resources.Identifier;
 import net.minecraft.util.ARGB;
 import org.joml.Matrix4f;
@@ -31,9 +30,22 @@ import java.util.Random;
 /**
  * 水晶花园天空渲染器
  * 适配自 Botania (植物魔法) 的 Garden of Glass 天空效果。
- * 针对 Minecraft 1.21.8 的 Blaze3D Next 渲染引擎进行了重写，使用了现代的缓冲渲染 API。
  */
 public class SkyblockSkyRenderer {
+
+	/**
+	 * 创建一个无深度测试、无光照的半透明 RenderType，用于天空层渲染。
+	 * 行为等价于旧版 (1.21.8-) 的 {@code RenderType.celestial()}。
+	 */
+	private static RenderType celestialRenderType(Identifier texture) {
+		return RenderType.create(
+			"gog_sky_celestial",
+			RenderSetup.builder(RenderPipelines.CELESTIAL)
+				.withTexture("Sampler0", texture)
+				.sortOnUpload()
+				.createRenderSetup()
+		);
+	}
 
 	private static final Identifier textureSkybox = Identifier.fromNamespaceAndPath("gog-sky", "textures/environment/skybox.png");
 	private static final Identifier textureRainbow = Identifier.fromNamespaceAndPath("gog-sky", "textures/environment/rainbow.png");
@@ -71,12 +83,12 @@ public class SkyblockSkyRenderer {
 		ms.pushPose();
 		ms.mulPose(new Quaternionf().rotateAxis(VecHelper.toRadians(90), 0.5F, 0.5F, 0F));
 		for (int p = 0; p < planetTextures.length; p++) {
-			VertexConsumer consumer = bufferSource.getBuffer(RenderTypes.entityTranslucent(planetTextures[p]));
+			VertexConsumer consumer = bufferSource.getBuffer(celestialRenderType(planetTextures[p]));
 			Matrix4f mat = ms.last().pose();
-			consumer.addVertex(mat, -scale, 100, -scale).setUv(0.0F, 0.0F).setColor(planetColor).setOverlay(OverlayTexture.NO_OVERLAY).setLight(LightTexture.FULL_BRIGHT).setNormal(0, 1, 0);
-			consumer.addVertex(mat, scale, 100, scale).setUv(1.0F, 1.0F).setColor(planetColor).setOverlay(OverlayTexture.NO_OVERLAY).setLight(LightTexture.FULL_BRIGHT).setNormal(0, 1, 0);
-			consumer.addVertex(mat, -scale, 100, scale).setUv(0.0F, 1.0F).setColor(planetColor).setOverlay(OverlayTexture.NO_OVERLAY).setLight(LightTexture.FULL_BRIGHT).setNormal(0, 1, 0);
-
+			consumer.addVertex(mat, -scale, 100, -scale).setUv(0.0F, 0.0F).setColor(planetColor);
+			consumer.addVertex(mat, scale, 100, -scale).setUv(1.0F, 0.0F).setColor(planetColor);
+			consumer.addVertex(mat, scale, 100, scale).setUv(1.0F, 1.0F).setColor(planetColor);
+			consumer.addVertex(mat, -scale, 100, scale).setUv(0.0F, 1.0F).setColor(planetColor);
 			switch (p) {
 				case 0 -> {
 					ms.mulPose(VecHelper.rotateX(70));
@@ -127,7 +139,7 @@ public class SkyblockSkyRenderer {
 			if (p == 1) rayColor = ARGB.color((int) (a * 255), 255, 102, 102);
 			if (p == 2) rayColor = ARGB.color((int) (a * 255), 102, 255, 178);
 
-			VertexConsumer consumer = bufferSource.getBuffer(RenderTypes.entityTranslucent(textureSkybox));
+			VertexConsumer consumer = bufferSource.getBuffer(celestialRenderType(textureSkybox));
 			Matrix4f mat = ms.last().pose();
 			for (int i = 0; i < angles; i++) {
 				int j = i;
@@ -139,13 +151,13 @@ public class SkyblockSkyRenderer {
 				float yo = (float) Math.sin(fuzzPer * j) * 1;
 				float ut = ang * uPer;
 
-				if (i % 2 == 0) {
-					consumer.addVertex(mat, xp, yo + y0 + y, zp).setUv(ut, 1F).setColor(rayColor).setOverlay(OverlayTexture.NO_OVERLAY).setLight(LightTexture.FULL_BRIGHT).setNormal(0, 1, 0);
-					consumer.addVertex(mat, xp, yo + y0, zp).setUv(ut, 0).setColor(rayColor).setOverlay(OverlayTexture.NO_OVERLAY).setLight(LightTexture.FULL_BRIGHT).setNormal(0, 1, 0);
-				} else {
-					consumer.addVertex(mat, xp, yo + y0, zp).setUv(ut, 0).setColor(rayColor).setOverlay(OverlayTexture.NO_OVERLAY).setLight(LightTexture.FULL_BRIGHT).setNormal(0, 1, 0);
-					consumer.addVertex(mat, xp, yo + y0 + y, zp).setUv(ut, 1F).setColor(rayColor).setOverlay(OverlayTexture.NO_OVERLAY).setLight(LightTexture.FULL_BRIGHT).setNormal(0, 1, 0);
-				}
+			if (i % 2 == 0) {
+				consumer.addVertex(mat, xp, yo + y0 + y, zp).setUv(ut, 1F).setColor(rayColor);
+				consumer.addVertex(mat, xp, yo + y0, zp).setUv(ut, 0).setColor(rayColor);
+			} else {
+				consumer.addVertex(mat, xp, yo + y0, zp).setUv(ut, 0).setColor(rayColor);
+				consumer.addVertex(mat, xp, yo + y0 + y, zp).setUv(ut, 1F).setColor(rayColor);
+			}
 			}
 
 			switch (p) {
@@ -181,7 +193,7 @@ public class SkyblockSkyRenderer {
 		ms.mulPose(VecHelper.rotateY(angle1));
 		ms.mulPose(VecHelper.rotateZ(angle2));
 
-		VertexConsumer consumer = bufferSource.getBuffer(RenderTypes.entityTranslucent(textureRainbow));
+		VertexConsumer consumer = bufferSource.getBuffer(celestialRenderType(textureRainbow));
 		Matrix4f mat = ms.last().pose();
 		for (int i = 0; i < angles; i++) {
 			int j = i;
@@ -194,11 +206,11 @@ public class SkyblockSkyRenderer {
 			float ut = ang * uPer;
 
 			if (i % 2 == 0) {
-				consumer.addVertex(mat, xp, yo + y0 + y, zp).setUv(ut, 1F).setColor(rainbowColor).setOverlay(OverlayTexture.NO_OVERLAY).setLight(LightTexture.FULL_BRIGHT).setNormal(0, 1, 0);
-				consumer.addVertex(mat, xp, yo + y0, zp).setUv(ut, 0).setColor(rainbowColor).setOverlay(OverlayTexture.NO_OVERLAY).setLight(LightTexture.FULL_BRIGHT).setNormal(0, 1, 0);
+				consumer.addVertex(mat, xp, yo + y0 + y, zp).setUv(ut, 1F).setColor(rainbowColor);
+				consumer.addVertex(mat, xp, yo + y0, zp).setUv(ut, 0).setColor(rainbowColor);
 			} else {
-				consumer.addVertex(mat, xp, yo + y0, zp).setUv(ut, 0).setColor(rainbowColor).setOverlay(OverlayTexture.NO_OVERLAY).setLight(LightTexture.FULL_BRIGHT).setNormal(0, 1, 0);
-				consumer.addVertex(mat, xp, yo + y0 + y, zp).setUv(ut, 1F).setColor(rainbowColor).setOverlay(OverlayTexture.NO_OVERLAY).setLight(LightTexture.FULL_BRIGHT).setNormal(0, 1, 0);
+				consumer.addVertex(mat, xp, yo + y0, zp).setUv(ut, 0).setColor(rainbowColor);
+				consumer.addVertex(mat, xp, yo + y0 + y, zp).setUv(ut, 1F).setColor(rainbowColor);
 			}
 		}
 		ms.popPose();
