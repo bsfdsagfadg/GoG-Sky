@@ -58,6 +58,7 @@ public class SkyblockSkyRenderer {
 	 */
 	public static void renderExtra(PoseStack ms, MultiBufferSource bufferSource, ClientLevel world, float partialTicks, float insideVoid) {
 		com.mojang.blaze3d.opengl.GlStateManager._disableDepthTest();
+		com.mojang.blaze3d.opengl.GlStateManager._depthMask(false);
 		float rain = 1.0F - world.getRainLevel(partialTicks);
 		float celAng = world.getTimeOfDay(partialTicks);
 		float effCelAng = celAng;
@@ -205,6 +206,7 @@ public class SkyblockSkyRenderer {
 			}
 		}
 		ms.popPose();
+		com.mojang.blaze3d.opengl.GlStateManager._depthMask(true);
 		com.mojang.blaze3d.opengl.GlStateManager._enableDepthTest();
 	}
 
