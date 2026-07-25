@@ -58,6 +58,7 @@ public class SkyblockSkyRenderer {
 	 */
 	public static void renderExtra(PoseStack ms, MultiBufferSource bufferSource, ClientLevel world, float celAng, float partialTicks, float insideVoid) {
 		GlStateManager._disableDepthTest();
+		GlStateManager._depthMask(false);
 		float rain = 1.0F - world.getRainLevel(partialTicks);
 		float effCelAng = celAng;
 		if (celAng > 0.5) {
@@ -68,7 +69,7 @@ public class SkyblockSkyRenderer {
 		float scale = 20F;
 		float lowA = Math.max(0F, effCelAng - 0.3F) * rain;
 		float a = Math.max(0.1F, lowA);
-		int planetColor = ARGB.white(a * 4 * (1F - insideVoid));
+		int planetColor = ARGB.white(a * 2 * (1F - insideVoid));
 
 		ms.pushPose();
 		ms.mulPose(new Quaternionf().rotateAxis(VecHelper.toRadians(90), 0.5F, 0.5F, 0F));
@@ -204,6 +205,8 @@ public class SkyblockSkyRenderer {
 			}
 		}
 		ms.popPose();
+		GlStateManager._depthMask(true);
+		GlStateManager._enableDepthTest();
 	}
 
 	/**
