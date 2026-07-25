@@ -69,7 +69,7 @@ public class SkyblockSkyRenderer {
 		float scale = 20F;
 		float lowA = Math.max(0F, effCelAng - 0.3F) * rain;
 		float a = Math.max(0.1F, lowA);
-		int planetColor = ARGB.white(a * 2 * (1F - insideVoid));
+		int planetColor = ARGB.white(a * 4 * (1F - insideVoid));
 
 		ms.pushPose();
 		ms.mulPose(new Quaternionf().rotateAxis(VecHelper.toRadians(90), 0.5F, 0.5F, 0F));
