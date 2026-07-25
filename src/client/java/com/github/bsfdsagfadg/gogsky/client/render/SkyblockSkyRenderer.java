@@ -40,7 +40,7 @@ public class SkyblockSkyRenderer {
 	private static RenderType celestialRenderType(Identifier texture) {
 		return RenderType.create(
 			"gog_sky_celestial",
-			RenderSetup.builder(RenderPipelines.CELESTIAL)
+			RenderSetup.builder(RenderPipelines.STARS)
 				.withTexture("Sampler0", texture)
 				.sortOnUpload()
 				.createRenderSetup()
@@ -80,7 +80,6 @@ public class SkyblockSkyRenderer {
 		float a = Math.max(0.1F, lowA);
 		int planetColor = ARGB.white(a * 4 * (1F - insideVoid));
 
-		com.mojang.blaze3d.opengl.GlStateManager._enableBlend();
 		ms.pushPose();
 		ms.mulPose(new Quaternionf().rotateAxis(VecHelper.toRadians(90), 0.5F, 0.5F, 0F));
 		for (int p = 0; p < planetTextures.length; p++) {
@@ -121,7 +120,6 @@ public class SkyblockSkyRenderer {
 		a = lowA;
 		int rayBaseColor = ARGB.white(a);
 		ms.pushPose();
-		com.mojang.blaze3d.opengl.GlStateManager._blendFuncSeparate(770, 1, 1, 0);
 		ms.translate(0, -1, 0);
 		ms.mulPose(VecHelper.rotateX(220));
 
@@ -176,7 +174,6 @@ public class SkyblockSkyRenderer {
 				}
 			}
 		}
-		com.mojang.blaze3d.opengl.GlStateManager._blendFuncSeparate(770, 771, 1, 0);
 		ms.popPose();
 
 		// --- 渲染彩虹 (Rainbow) ---
