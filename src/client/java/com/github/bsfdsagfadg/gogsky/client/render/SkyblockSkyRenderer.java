@@ -80,6 +80,7 @@ public class SkyblockSkyRenderer {
 		float a = Math.max(0.1F, lowA);
 		int planetColor = ARGB.white(a * 4 * (1F - insideVoid));
 
+		com.mojang.blaze3d.opengl.GlStateManager._enableBlend();
 		ms.pushPose();
 		ms.mulPose(new Quaternionf().rotateAxis(VecHelper.toRadians(90), 0.5F, 0.5F, 0F));
 		for (int p = 0; p < planetTextures.length; p++) {
@@ -89,6 +90,7 @@ public class SkyblockSkyRenderer {
 			consumer.addVertex(mat, scale, 100, -scale).setUv(1.0F, 0.0F).setColor(planetColor);
 			consumer.addVertex(mat, scale, 100, scale).setUv(1.0F, 1.0F).setColor(planetColor);
 			consumer.addVertex(mat, -scale, 100, scale).setUv(0.0F, 1.0F).setColor(planetColor);
+
 			switch (p) {
 				case 0 -> {
 					ms.mulPose(VecHelper.rotateX(70));
@@ -119,9 +121,10 @@ public class SkyblockSkyRenderer {
 		a = lowA;
 		int rayBaseColor = ARGB.white(a);
 		ms.pushPose();
+		com.mojang.blaze3d.opengl.GlStateManager._blendFuncSeparate(770, 1, 1, 0);
 		ms.translate(0, -1, 0);
 		ms.mulPose(VecHelper.rotateX(220));
-		
+
 		int angles = 90;
 		float y = 2F;
 		float y0 = 0F;
@@ -151,13 +154,13 @@ public class SkyblockSkyRenderer {
 				float yo = (float) Math.sin(fuzzPer * j) * 1;
 				float ut = ang * uPer;
 
-			if (i % 2 == 0) {
-				consumer.addVertex(mat, xp, yo + y0 + y, zp).setUv(ut, 1F).setColor(rayColor);
-				consumer.addVertex(mat, xp, yo + y0, zp).setUv(ut, 0).setColor(rayColor);
-			} else {
-				consumer.addVertex(mat, xp, yo + y0, zp).setUv(ut, 0).setColor(rayColor);
-				consumer.addVertex(mat, xp, yo + y0 + y, zp).setUv(ut, 1F).setColor(rayColor);
-			}
+				if (i % 2 == 0) {
+					consumer.addVertex(mat, xp, yo + y0 + y, zp).setUv(ut, 1F).setColor(rayColor);
+					consumer.addVertex(mat, xp, yo + y0, zp).setUv(ut, 0).setColor(rayColor);
+				} else {
+					consumer.addVertex(mat, xp, yo + y0, zp).setUv(ut, 0).setColor(rayColor);
+					consumer.addVertex(mat, xp, yo + y0 + y, zp).setUv(ut, 1F).setColor(rayColor);
+				}
 			}
 
 			switch (p) {
@@ -173,6 +176,7 @@ public class SkyblockSkyRenderer {
 				}
 			}
 		}
+		com.mojang.blaze3d.opengl.GlStateManager._blendFuncSeparate(770, 771, 1, 0);
 		ms.popPose();
 
 		// --- 渲染彩虹 (Rainbow) ---
@@ -202,15 +206,14 @@ public class SkyblockSkyRenderer {
 			float ang = j * anglePer;
 			float xp = (float) Math.cos(ang * Math.PI / 180F) * scale;
 			float zp = (float) Math.sin(ang * Math.PI / 180F) * scale;
-			float yo = 0;
 			float ut = ang * uPer;
 
 			if (i % 2 == 0) {
-				consumer.addVertex(mat, xp, yo + y0 + y, zp).setUv(ut, 1F).setColor(rainbowColor);
-				consumer.addVertex(mat, xp, yo + y0, zp).setUv(ut, 0).setColor(rainbowColor);
+				consumer.addVertex(mat, xp, y0 + y, zp).setUv(ut, 1F).setColor(rainbowColor);
+				consumer.addVertex(mat, xp, y0, zp).setUv(ut, 0).setColor(rainbowColor);
 			} else {
-				consumer.addVertex(mat, xp, yo + y0, zp).setUv(ut, 0).setColor(rainbowColor);
-				consumer.addVertex(mat, xp, yo + y0 + y, zp).setUv(ut, 1F).setColor(rainbowColor);
+				consumer.addVertex(mat, xp, y0, zp).setUv(ut, 0).setColor(rainbowColor);
+				consumer.addVertex(mat, xp, y0 + y, zp).setUv(ut, 1F).setColor(rainbowColor);
 			}
 		}
 		ms.popPose();
