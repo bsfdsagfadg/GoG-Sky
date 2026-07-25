@@ -14,6 +14,8 @@ import net.minecraft.client.multiplayer.ClientLevel;
 import net.minecraft.client.renderer.MultiBufferSource;
 import net.minecraft.client.renderer.RenderPipelines;
 import net.minecraft.client.renderer.rendertype.RenderTypes;
+import net.minecraft.client.renderer.LightTexture;
+import net.minecraft.client.renderer.texture.OverlayTexture;
 import net.minecraft.resources.Identifier;
 import net.minecraft.util.ARGB;
 import org.joml.Matrix4f;
@@ -71,9 +73,9 @@ public class SkyblockSkyRenderer {
 		for (int p = 0; p < planetTextures.length; p++) {
 			VertexConsumer consumer = bufferSource.getBuffer(RenderTypes.entityTranslucent(planetTextures[p]));
 			Matrix4f mat = ms.last().pose();
-			consumer.addVertex(mat, -scale, 100, -scale).setUv(0.0F, 0.0F).setColor(planetColor);
-			consumer.addVertex(mat, scale, 100, scale).setUv(1.0F, 1.0F).setColor(planetColor);
-			consumer.addVertex(mat, -scale, 100, scale).setUv(0.0F, 1.0F).setColor(planetColor);
+			consumer.addVertex(mat, -scale, 100, -scale).setUv(0.0F, 0.0F).setColor(planetColor).setOverlay(OverlayTexture.NO_OVERLAY).setLight(LightTexture.FULL_BRIGHT).setNormal(0, 1, 0);
+			consumer.addVertex(mat, scale, 100, scale).setUv(1.0F, 1.0F).setColor(planetColor).setOverlay(OverlayTexture.NO_OVERLAY).setLight(LightTexture.FULL_BRIGHT).setNormal(0, 1, 0);
+			consumer.addVertex(mat, -scale, 100, scale).setUv(0.0F, 1.0F).setColor(planetColor).setOverlay(OverlayTexture.NO_OVERLAY).setLight(LightTexture.FULL_BRIGHT).setNormal(0, 1, 0);
 
 			switch (p) {
 				case 0 -> {
@@ -138,11 +140,11 @@ public class SkyblockSkyRenderer {
 				float ut = ang * uPer;
 
 				if (i % 2 == 0) {
-					consumer.addVertex(mat, xp, yo + y0 + y, zp).setUv(ut, 1F).setColor(rayColor);
-					consumer.addVertex(mat, xp, yo + y0, zp).setUv(ut, 0).setColor(rayColor);
+					consumer.addVertex(mat, xp, yo + y0 + y, zp).setUv(ut, 1F).setColor(rayColor).setOverlay(OverlayTexture.NO_OVERLAY).setLight(LightTexture.FULL_BRIGHT).setNormal(0, 1, 0);
+					consumer.addVertex(mat, xp, yo + y0, zp).setUv(ut, 0).setColor(rayColor).setOverlay(OverlayTexture.NO_OVERLAY).setLight(LightTexture.FULL_BRIGHT).setNormal(0, 1, 0);
 				} else {
-					consumer.addVertex(mat, xp, yo + y0, zp).setUv(ut, 0).setColor(rayColor);
-					consumer.addVertex(mat, xp, yo + y0 + y, zp).setUv(ut, 1F).setColor(rayColor);
+					consumer.addVertex(mat, xp, yo + y0, zp).setUv(ut, 0).setColor(rayColor).setOverlay(OverlayTexture.NO_OVERLAY).setLight(LightTexture.FULL_BRIGHT).setNormal(0, 1, 0);
+					consumer.addVertex(mat, xp, yo + y0 + y, zp).setUv(ut, 1F).setColor(rayColor).setOverlay(OverlayTexture.NO_OVERLAY).setLight(LightTexture.FULL_BRIGHT).setNormal(0, 1, 0);
 				}
 			}
 
@@ -192,11 +194,11 @@ public class SkyblockSkyRenderer {
 			float ut = ang * uPer;
 
 			if (i % 2 == 0) {
-				consumer.addVertex(mat, xp, yo + y0 + y, zp).setUv(ut, 1F).setColor(rainbowColor);
-				consumer.addVertex(mat, xp, yo + y0, zp).setUv(ut, 0).setColor(rainbowColor);
+				consumer.addVertex(mat, xp, yo + y0 + y, zp).setUv(ut, 1F).setColor(rainbowColor).setOverlay(OverlayTexture.NO_OVERLAY).setLight(LightTexture.FULL_BRIGHT).setNormal(0, 1, 0);
+				consumer.addVertex(mat, xp, yo + y0, zp).setUv(ut, 0).setColor(rainbowColor).setOverlay(OverlayTexture.NO_OVERLAY).setLight(LightTexture.FULL_BRIGHT).setNormal(0, 1, 0);
 			} else {
-				consumer.addVertex(mat, xp, yo + y0, zp).setUv(ut, 0).setColor(rainbowColor);
-				consumer.addVertex(mat, xp, yo + y0 + y, zp).setUv(ut, 1F).setColor(rainbowColor);
+				consumer.addVertex(mat, xp, yo + y0, zp).setUv(ut, 0).setColor(rainbowColor).setOverlay(OverlayTexture.NO_OVERLAY).setLight(LightTexture.FULL_BRIGHT).setNormal(0, 1, 0);
+				consumer.addVertex(mat, xp, yo + y0 + y, zp).setUv(ut, 1F).setColor(rainbowColor).setOverlay(OverlayTexture.NO_OVERLAY).setLight(LightTexture.FULL_BRIGHT).setNormal(0, 1, 0);
 			}
 		}
 		ms.popPose();
