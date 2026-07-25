@@ -3,6 +3,7 @@ package com.github.bsfdsagfadg.gogsky.client.render;
 import com.github.bsfdsagfadg.gogsky.client.ClientTickHandler;
 import com.github.bsfdsagfadg.gogsky.client.util.VecHelper;
 import com.mojang.blaze3d.systems.RenderSystem;
+import com.mojang.blaze3d.vertex.VertexBuffer;
 import com.mojang.blaze3d.vertex.PoseStack;
 import com.mojang.blaze3d.vertex.VertexConsumer;
 import net.minecraft.client.Minecraft;
@@ -10,10 +11,12 @@ import net.minecraft.client.multiplayer.ClientLevel;
 import net.minecraft.client.renderer.MultiBufferSource;
 import net.minecraft.client.renderer.RenderType;
 import net.minecraft.resources.ResourceLocation;
+import net.minecraft.client.renderer.FogParameters;
 import net.minecraft.util.ARGB;
 import org.joml.Matrix4f;
+import org.joml.Matrix4fStack;
 import org.joml.Quaternionf;
-
+import org.joml.Vector4f;
 import java.util.Random;
 
 /**
@@ -182,4 +185,32 @@ public class SkyblockSkyRenderer {
 		}
 		ms.popPose();
 	}
-}
+
+	public static void renderStars(VertexBuffer starBuffer, PoseStack ms, float partialTicks) {
+		Minecraft mc = Minecraft.getInstance();
+		float rain = 1.0F - mc.level.getRainLevel(partialTicks);
+		float celAng = mc.level.getTimeOfDay(partialTicks);
+		float effCelAng = celAng;
+		if (celAng > 0.5) effCelAng = 0.5F - (celAng - 0.5F);
+		float alpha = rain * Math.max(0.1F, effCelAng * 2);
+		if (alpha <= 0) return;
+		float t = (ClientTickHandler.total() + 2000) * 0.005F;
+
+		RenderSystem.setShaderFog(FogParameters.NO_FOG);
+		drawStarLayerVB(starBuffer, ms, VecHelper.rotateY(t * 3), new Vector4f(alpha, alpha, alpha, alpha));
+		drawStarLayerVB(starBuffer, ms, VecHelper.rotateY(t * 1), new Vector4f(0.5f * alpha, alpha, alpha, alpha));
+		drawStarLayerVB(starBuffer, ms, VecHelper.rotateY(t * 2), new Vector4f(alpha, 0.75f * alpha, 0.75f * alpha, alpha));
+		drawStarLayerVB(starBuffer, ms, VecHelper.rotateZ(t * 3), new Vector4f(alpha, alpha, alpha, 0.25f * alpha));
+		drawStarLayerVB(starBuffer, ms, VecHelper.rotateZ(t * 1), new Vector4f(0.5f * alpha, alpha, alpha, 0.25f * alpha));
+		drawStarLayerVB(starBuffer, ms, VecHelper.rotateZ(t * 2), new Vector4f(alpha, 0.75f * alpha, 0.75f * alpha, 0.25f * alpha));
+	}
+
+	private static void drawStarLayerVB(VertexBuffer starBuffer, PoseStack ms, Quaternionf rotation, Vector4f color) {
+		Matrix4fStack stack = RenderSystem.getModelViewStack();
+		stack.pushMatrix();
+		stack.mul(ms.last().pose());
+		stack.rotate(rotation);
+		RenderSystem.setShaderColor(color.x, color.y, color.z, color.w);
+		starBuffer.drawWithRenderType(RenderType.stars());
+		stack.popMatrix();
+	}}
