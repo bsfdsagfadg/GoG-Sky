@@ -4,7 +4,6 @@ import com.github.bsfdsagfadg.gogsky.client.GogSkyConfig;
 import com.github.bsfdsagfadg.gogsky.client.render.SkyblockSkyRenderer;
 import com.mojang.blaze3d.buffers.GpuBuffer;
 import com.mojang.blaze3d.systems.RenderSystem;
-import com.mojang.blaze3d.vertex.ByteBufferBuilder;
 import com.mojang.blaze3d.vertex.PoseStack;
 import com.mojang.blaze3d.vertex.Tesselator;
 import net.minecraft.client.Minecraft;
@@ -25,10 +24,10 @@ public abstract class SkyRendererMixin {
     @Shadow private int starIndexCount;
 
     @Inject(method = "renderSunMoonAndStars", at = @At("HEAD"))
-    private void onRenderSunMoonAndStars(PoseStack poseStack, float f, int i, float g, float h, CallbackInfo ci) {
+    private void onRenderExtra(PoseStack poseStack, float f, int i, float g, float h, CallbackInfo ci) {
         Minecraft mc = Minecraft.getInstance();
         if (GogSkyConfig.isEnabled(mc.level)) {
-            MultiBufferSource.BufferSource bufferSource = MultiBufferSource.immediate(new ByteBufferBuilder(256));
+            MultiBufferSource.BufferSource bufferSource = MultiBufferSource.immediate(new com.mojang.blaze3d.vertex.ByteBufferBuilder(256));
             SkyblockSkyRenderer.renderExtra(poseStack, bufferSource, mc.level, f, 0);
             bufferSource.endBatch();
         }
