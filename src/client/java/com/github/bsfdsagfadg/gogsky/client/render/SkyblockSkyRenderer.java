@@ -6,7 +6,6 @@ import com.mojang.blaze3d.buffers.GpuBuffer;
 import com.mojang.blaze3d.pipeline.RenderPipeline;
 import com.mojang.blaze3d.systems.RenderPass;
 import com.mojang.blaze3d.systems.RenderSystem;
-import com.mojang.blaze3d.textures.GpuTextureView;
 import com.mojang.blaze3d.vertex.PoseStack;
 import com.mojang.blaze3d.vertex.VertexConsumer;
 import net.minecraft.client.Minecraft;
@@ -233,7 +232,7 @@ public class SkyblockSkyRenderer {
 	}
 
 	/**
-	 * 绘制单层星星
+	 * 绘制单层星星 (1.21.5 旧 API: 无 DynamicUniforms, 用 setShaderColor)
 	 */
 	private static void drawStarLayer(GpuBuffer starBuffer, GpuBuffer starIndices, int starIndexCount, RenderSystem.AutoStorageIndexBuffer starIndexBuffer, PoseStack ms, Quaternionf rotation, Vector4f color, String name) {
 		Matrix4fStack matrix4fStack = RenderSystem.getModelViewStack();
@@ -242,25 +241,23 @@ public class SkyblockSkyRenderer {
 		matrix4fStack.rotate(rotation);
 
 		RenderPipeline renderPipeline = RenderPipelines.STARS;
-		GpuTextureView gpuTextureView = Minecraft.getInstance().getMainRenderTarget().getColorTextureView();
-		GpuTextureView gpuTextureView2 = Minecraft.getInstance().getMainRenderTarget().getDepthTextureView();
+		var gpuTexture = Minecraft.getInstance().getMainRenderTarget().getColorTexture();
+		var gpuDepthTexture = Minecraft.getInstance().getMainRenderTarget().getDepthTexture();
 		
-		var gpuBufferSlice = RenderSystem.getDynamicUniforms().writeTransform(matrix4fStack, color, new Vector3f(), new Matrix4f(), 0.0F);
+		RenderSystem.setShaderColor(color.x, color.y, color.z, color.w);
 		
-		RenderPass renderPass = RenderSystem.getDevice().createCommandEncoder().createRenderPass(() -> name, gpuTextureView, OptionalInt.empty(), gpuTextureView2, OptionalDouble.empty());
+		RenderPass renderPass = RenderSystem.getDevice().createCommandEncoder().createRenderPass(gpuTexture, OptionalInt.empty(), gpuDepthTexture, OptionalDouble.empty());
 
 		try {
 			renderPass.setPipeline(renderPipeline);
-			RenderSystem.bindDefaultUniforms(renderPass);
-			renderPass.setUniform("DynamicTransforms", gpuBufferSlice);
 			renderPass.setVertexBuffer(0, starBuffer);
 			renderPass.setIndexBuffer(starIndices, starIndexBuffer.type());
-			renderPass.drawIndexed(0, 0, starIndexCount, 1);
+			renderPass.drawIndexed(0, starIndexCount);
 		} finally {
 			if (renderPass != null) {
 				renderPass.close();
 			}
 		}
 		matrix4fStack.popMatrix();
-	}
+}
 }
