@@ -12,9 +12,9 @@ import com.mojang.blaze3d.vertex.VertexConsumer;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.multiplayer.ClientLevel;
 import net.minecraft.client.renderer.MultiBufferSource;
-import net.minecraft.client.renderer.RenderType;
 import net.minecraft.client.renderer.RenderPipelines;
-import net.minecraft.resources.ResourceLocation;
+import net.minecraft.client.renderer.rendertype.RenderTypes;
+import net.minecraft.resources.Identifier;
 import net.minecraft.util.ARGB;
 import org.joml.Matrix4f;
 import org.joml.Matrix4fStack;
@@ -33,15 +33,15 @@ import java.util.Random;
  */
 public class SkyblockSkyRenderer {
 
-	private static final ResourceLocation textureSkybox = ResourceLocation.fromNamespaceAndPath("gog-sky", "textures/environment/skybox.png");
-	private static final ResourceLocation textureRainbow = ResourceLocation.fromNamespaceAndPath("gog-sky", "textures/environment/rainbow.png");
-	private static final ResourceLocation[] planetTextures = new ResourceLocation[] {
-			ResourceLocation.fromNamespaceAndPath("gog-sky", "textures/environment/planet0.png"),
-			ResourceLocation.fromNamespaceAndPath("gog-sky", "textures/environment/planet1.png"),
-			ResourceLocation.fromNamespaceAndPath("gog-sky", "textures/environment/planet2.png"),
-			ResourceLocation.fromNamespaceAndPath("gog-sky", "textures/environment/planet3.png"),
-			ResourceLocation.fromNamespaceAndPath("gog-sky", "textures/environment/planet4.png"),
-			ResourceLocation.fromNamespaceAndPath("gog-sky", "textures/environment/planet5.png")
+	private static final Identifier textureSkybox = Identifier.fromNamespaceAndPath("gog-sky", "textures/environment/skybox.png");
+	private static final Identifier textureRainbow = Identifier.fromNamespaceAndPath("gog-sky", "textures/environment/rainbow.png");
+	private static final Identifier[] planetTextures = new Identifier[] {
+			Identifier.fromNamespaceAndPath("gog-sky", "textures/environment/planet0.png"),
+			Identifier.fromNamespaceAndPath("gog-sky", "textures/environment/planet1.png"),
+			Identifier.fromNamespaceAndPath("gog-sky", "textures/environment/planet2.png"),
+			Identifier.fromNamespaceAndPath("gog-sky", "textures/environment/planet3.png"),
+			Identifier.fromNamespaceAndPath("gog-sky", "textures/environment/planet4.png"),
+			Identifier.fromNamespaceAndPath("gog-sky", "textures/environment/planet5.png")
 	};
 
 	/**
@@ -53,9 +53,8 @@ public class SkyblockSkyRenderer {
 	 * @param partialTicks 帧内插值时间
 	 * @param insideVoid 虚空深度透明度修正
 	 */
-	public static void renderExtra(PoseStack ms, MultiBufferSource bufferSource, ClientLevel world, float partialTicks, float insideVoid) {
+	public static void renderExtra(PoseStack ms, MultiBufferSource bufferSource, ClientLevel world, float celAng, float partialTicks, float insideVoid) {
 		float rain = 1.0F - world.getRainLevel(partialTicks);
-		float celAng = world.getTimeOfDay(partialTicks);
 		float effCelAng = celAng;
 		if (celAng > 0.5) {
 			effCelAng = 0.5F - (celAng - 0.5F);
@@ -70,10 +69,9 @@ public class SkyblockSkyRenderer {
 		ms.pushPose();
 		ms.mulPose(new Quaternionf().rotateAxis(VecHelper.toRadians(90), 0.5F, 0.5F, 0F));
 		for (int p = 0; p < planetTextures.length; p++) {
-			VertexConsumer consumer = bufferSource.getBuffer(RenderType.celestial(planetTextures[p]));
+			VertexConsumer consumer = bufferSource.getBuffer(RenderTypes.entityTranslucent(planetTextures[p]));
 			Matrix4f mat = ms.last().pose();
 			consumer.addVertex(mat, -scale, 100, -scale).setUv(0.0F, 0.0F).setColor(planetColor);
-			consumer.addVertex(mat, scale, 100, -scale).setUv(1.0F, 0.0F).setColor(planetColor);
 			consumer.addVertex(mat, scale, 100, scale).setUv(1.0F, 1.0F).setColor(planetColor);
 			consumer.addVertex(mat, -scale, 100, scale).setUv(0.0F, 1.0F).setColor(planetColor);
 
@@ -127,7 +125,7 @@ public class SkyblockSkyRenderer {
 			if (p == 1) rayColor = ARGB.color((int) (a * 255), 255, 102, 102);
 			if (p == 2) rayColor = ARGB.color((int) (a * 255), 102, 255, 178);
 
-			VertexConsumer consumer = bufferSource.getBuffer(RenderType.celestial(textureSkybox));
+			VertexConsumer consumer = bufferSource.getBuffer(RenderTypes.entityTranslucent(textureSkybox));
 			Matrix4f mat = ms.last().pose();
 			for (int i = 0; i < angles; i++) {
 				int j = i;
@@ -181,7 +179,7 @@ public class SkyblockSkyRenderer {
 		ms.mulPose(VecHelper.rotateY(angle1));
 		ms.mulPose(VecHelper.rotateZ(angle2));
 
-		VertexConsumer consumer = bufferSource.getBuffer(RenderType.celestial(textureRainbow));
+		VertexConsumer consumer = bufferSource.getBuffer(RenderTypes.entityTranslucent(textureRainbow));
 		Matrix4f mat = ms.last().pose();
 		for (int i = 0; i < angles; i++) {
 			int j = i;
@@ -206,12 +204,11 @@ public class SkyblockSkyRenderer {
 
 	/**
 	 * 渲染多层旋转星空
-	 * 针对 1.21.8 的 WebGPU-like 架构，通过 RenderPass 实现多层渲染叠加。
+	 * 针对 1.21.11 的 WebGPU-like 架构，通过 RenderPass 实现多层渲染叠加。
 	 */
-	public static void renderStars(GpuBuffer starBuffer, GpuBuffer starIndices, int starIndexCount, RenderSystem.AutoStorageIndexBuffer starIndexBuffer, PoseStack ms, float partialTicks) {
+	public static void renderStars(GpuBuffer starBuffer, GpuBuffer quadIndices, int starIndexCount, RenderSystem.AutoStorageIndexBuffer quadIndexBuffer, PoseStack ms, float celAng, float partialTicks) {
 		Minecraft mc = Minecraft.getInstance();
 		float rain = 1.0F - mc.level.getRainLevel(partialTicks);
-		float celAng = mc.level.getTimeOfDay(partialTicks);
 		float effCelAng = celAng;
 		if (celAng > 0.5) {
 			effCelAng = 0.5F - (celAng - 0.5F);
@@ -223,19 +220,19 @@ public class SkyblockSkyRenderer {
 		float t = (ClientTickHandler.total() + 2000) * 0.005F;
 
 		// 植物魔法原版通过 6 层不同旋转和颜色的星星 VBO 叠加实现深邃感
-		drawStarLayer(starBuffer, starIndices, starIndexCount, starIndexBuffer, ms, VecHelper.rotateY(t * 3), new Vector4f(alpha, alpha, alpha, alpha), "Stars 1");
-		drawStarLayer(starBuffer, starIndices, starIndexCount, starIndexBuffer, ms, VecHelper.rotateY(t * 1), new Vector4f(0.5f * alpha, alpha, alpha, alpha), "Stars 2");
-		drawStarLayer(starBuffer, starIndices, starIndexCount, starIndexBuffer, ms, VecHelper.rotateY(t * 2), new Vector4f(alpha, 0.75f * alpha, 0.75f * alpha, alpha), "Stars 3");
+		drawStarLayer(starBuffer, quadIndices, starIndexCount, quadIndexBuffer, ms, VecHelper.rotateY(t * 3), new Vector4f(alpha, alpha, alpha, alpha), "Stars 1");
+		drawStarLayer(starBuffer, quadIndices, starIndexCount, quadIndexBuffer, ms, VecHelper.rotateY(t * 1), new Vector4f(0.5f * alpha, alpha, alpha, alpha), "Stars 2");
+		drawStarLayer(starBuffer, quadIndices, starIndexCount, quadIndexBuffer, ms, VecHelper.rotateY(t * 2), new Vector4f(alpha, 0.75f * alpha, 0.75f * alpha, alpha), "Stars 3");
 
-		drawStarLayer(starBuffer, starIndices, starIndexCount, starIndexBuffer, ms, VecHelper.rotateZ(t * 3), new Vector4f(alpha, alpha, alpha, 0.25f * alpha), "Stars 4");
-		drawStarLayer(starBuffer, starIndices, starIndexCount, starIndexBuffer, ms, VecHelper.rotateZ(t * 1), new Vector4f(0.5f * alpha, alpha, alpha, 0.25f * alpha), "Stars 5");
-		drawStarLayer(starBuffer, starIndices, starIndexCount, starIndexBuffer, ms, VecHelper.rotateZ(t * 2), new Vector4f(alpha, 0.75f * alpha, 0.75f * alpha, 0.25f * alpha), "Stars 6");
+		drawStarLayer(starBuffer, quadIndices, starIndexCount, quadIndexBuffer, ms, VecHelper.rotateZ(t * 3), new Vector4f(alpha, alpha, alpha, 0.25f * alpha), "Stars 4");
+		drawStarLayer(starBuffer, quadIndices, starIndexCount, quadIndexBuffer, ms, VecHelper.rotateZ(t * 1), new Vector4f(0.5f * alpha, alpha, alpha, 0.25f * alpha), "Stars 5");
+		drawStarLayer(starBuffer, quadIndices, starIndexCount, quadIndexBuffer, ms, VecHelper.rotateZ(t * 2), new Vector4f(alpha, 0.75f * alpha, 0.75f * alpha, 0.25f * alpha), "Stars 6");
 	}
 
 	/**
 	 * 绘制单层星星
 	 */
-	private static void drawStarLayer(GpuBuffer starBuffer, GpuBuffer starIndices, int starIndexCount, RenderSystem.AutoStorageIndexBuffer starIndexBuffer, PoseStack ms, Quaternionf rotation, Vector4f color, String name) {
+	private static void drawStarLayer(GpuBuffer starBuffer, GpuBuffer quadIndices, int starIndexCount, RenderSystem.AutoStorageIndexBuffer quadIndexBuffer, PoseStack ms, Quaternionf rotation, Vector4f color, String name) {
 		Matrix4fStack matrix4fStack = RenderSystem.getModelViewStack();
 		matrix4fStack.pushMatrix();
 		matrix4fStack.mul(ms.last().pose());
@@ -245,7 +242,7 @@ public class SkyblockSkyRenderer {
 		GpuTextureView gpuTextureView = Minecraft.getInstance().getMainRenderTarget().getColorTextureView();
 		GpuTextureView gpuTextureView2 = Minecraft.getInstance().getMainRenderTarget().getDepthTextureView();
 		
-		var gpuBufferSlice = RenderSystem.getDynamicUniforms().writeTransform(matrix4fStack, color, new Vector3f(), new Matrix4f(), 0.0F);
+		var gpuBufferSlice = RenderSystem.getDynamicUniforms().writeTransform(matrix4fStack, color, new Vector3f(), new Matrix4f());
 		
 		RenderPass renderPass = RenderSystem.getDevice().createCommandEncoder().createRenderPass(() -> name, gpuTextureView, OptionalInt.empty(), gpuTextureView2, OptionalDouble.empty());
 
@@ -254,7 +251,7 @@ public class SkyblockSkyRenderer {
 			RenderSystem.bindDefaultUniforms(renderPass);
 			renderPass.setUniform("DynamicTransforms", gpuBufferSlice);
 			renderPass.setVertexBuffer(0, starBuffer);
-			renderPass.setIndexBuffer(starIndices, starIndexBuffer.type());
+			renderPass.setIndexBuffer(quadIndices, quadIndexBuffer.type());
 			renderPass.drawIndexed(0, 0, starIndexCount, 1);
 		} finally {
 			if (renderPass != null) {

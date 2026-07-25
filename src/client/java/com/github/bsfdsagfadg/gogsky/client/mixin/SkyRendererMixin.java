@@ -23,47 +23,38 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 public abstract class SkyRendererMixin {
 
     @Shadow @Final private GpuBuffer starBuffer;
-    @Shadow @Final private RenderSystem.AutoStorageIndexBuffer starIndices;
+    @Shadow @Final private RenderSystem.AutoStorageIndexBuffer quadIndices;
     @Shadow private int starIndexCount;
 
-    /**
-     * 在渲染太阳、月亮和星星之前注入额外的大气效果（行星、极光、彩虹）
-     */
     @Inject(method = "renderSunMoonAndStars", at = @At("HEAD"))
-    private void onRenderSunMoonAndStars(PoseStack poseStack, MultiBufferSource.BufferSource bufferSource, float f, int i, float g, float h, CallbackInfo ci) {
+    private void onRenderSunMoonAndStars(PoseStack poseStack, float sunAngle, float moonAngle, float starAngle, net.minecraft.world.level.MoonPhase moonPhase, float rainBrightness, float starBrightness, CallbackInfo ci) {
         Minecraft mc = Minecraft.getInstance();
         if (GogSkyConfig.isEnabled(mc.level)) {
-            SkyblockSkyRenderer.renderExtra(poseStack, bufferSource, mc.level, ClientTickHandler.partialTicks, 0);
+            MultiBufferSource.BufferSource bufferSource = mc.renderBuffers().bufferSource();
+            float celAng = sunAngle / (float) (2 * Math.PI); // sunAngle is radians, convert to 0-1
+            SkyblockSkyRenderer.renderExtra(poseStack, bufferSource, mc.level, celAng, ClientTickHandler.partialTicks, 0);
+            bufferSource.endBatch(); // Flush the rendering
         }
     }
 
-    /**
-     * 替换原版的星星渲染，使用自定义的多层旋转星空
-     */
     @Inject(method = "renderSunMoonAndStars", at = @At(value = "INVOKE", target = "Lnet/minecraft/client/renderer/SkyRenderer;renderStars(FLcom/mojang/blaze3d/vertex/PoseStack;)V"))
-    private void onRenderStars(PoseStack poseStack, MultiBufferSource.BufferSource bufferSource, float f, int i, float g, float h, CallbackInfo ci) {
+    private void onRenderStars(PoseStack poseStack, float sunAngle, float moonAngle, float starAngle, net.minecraft.world.level.MoonPhase moonPhase, float rainBrightness, float starBrightness, CallbackInfo ci) {
         Minecraft mc = Minecraft.getInstance();
         if (GogSkyConfig.isEnabled(mc.level)) {
-            GpuBuffer indices = this.starIndices.getBuffer(this.starIndexCount);
-            SkyblockSkyRenderer.renderStars(this.starBuffer, indices, this.starIndexCount, this.starIndices, poseStack, ClientTickHandler.partialTicks);
+            GpuBuffer indices = this.quadIndices.getBuffer(this.starIndexCount);
+            SkyblockSkyRenderer.renderStars(this.starBuffer, indices, this.starIndexCount, this.quadIndices, poseStack, sunAngle / (float) (2 * Math.PI), ClientTickHandler.partialTicks);
         }
     }
 
-    /**
-     * 放大太阳的渲染尺寸，以符合植物魔法的视觉风格
-     */
     @Inject(method = "renderSun", at = @At("HEAD"))
-    private void onRenderSun(float alpha, MultiBufferSource multiBufferSource, PoseStack poseStack, CallbackInfo ci) {
+    private void onRenderSun(float alpha, PoseStack poseStack, CallbackInfo ci) {
         if (GogSkyConfig.isEnabled(Minecraft.getInstance().level)) {
             poseStack.scale(2.0F, 1.0F, 2.0F);
         }
     }
 
-    /**
-     * 放大月亮的渲染尺寸
-     */
     @Inject(method = "renderMoon", at = @At("HEAD"))
-    private void onRenderMoon(int i, float alpha, MultiBufferSource multiBufferSource, PoseStack poseStack, CallbackInfo ci) {
+    private void onRenderMoon(net.minecraft.world.level.MoonPhase moonPhase, float alpha, PoseStack poseStack, CallbackInfo ci) {
         if (GogSkyConfig.isEnabled(Minecraft.getInstance().level)) {
             poseStack.scale(1.5F, 1.0F, 1.5F);
         }
