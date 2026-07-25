@@ -13,8 +13,10 @@ import net.minecraft.client.Minecraft;
 import net.minecraft.client.multiplayer.ClientLevel;
 import net.minecraft.client.renderer.MultiBufferSource;
 import net.minecraft.client.renderer.RenderPipelines;
-import net.minecraft.client.renderer.rendertype.RenderSetup;
-import net.minecraft.client.renderer.rendertype.RenderType;
+import net.minecraft.client.renderer.LightTexture;
+import net.minecraft.client.renderer.texture.OverlayTexture;
+import net.minecraft.client.renderer.rendertype.RenderTypes;
+import com.mojang.blaze3d.opengl.GlStateManager;
 import net.minecraft.resources.Identifier;
 import net.minecraft.util.ARGB;
 import org.joml.Matrix4f;
@@ -33,19 +35,6 @@ import java.util.Random;
  */
 public class SkyblockSkyRenderer {
 
-	/**
-	 * 创建一个无深度测试、无光照的半透明 RenderType，用于天空层渲染。
-	 * 行为等价于旧版 (1.21.8-) 的 {@code RenderType.celestial()}。
-	 */
-	private static RenderType celestialRenderType(Identifier texture) {
-		return RenderType.create(
-			"gog_sky_celestial",
-			RenderSetup.builder(RenderPipelines.STARS)
-				.withTexture("Sampler0", texture)
-				.sortOnUpload()
-				.createRenderSetup()
-		);
-	}
 
 	private static final Identifier textureSkybox = Identifier.fromNamespaceAndPath("gog-sky", "textures/environment/skybox.png");
 	private static final Identifier textureRainbow = Identifier.fromNamespaceAndPath("gog-sky", "textures/environment/rainbow.png");
@@ -68,6 +57,7 @@ public class SkyblockSkyRenderer {
 	 * @param insideVoid 虚空深度透明度修正
 	 */
 	public static void renderExtra(PoseStack ms, MultiBufferSource bufferSource, ClientLevel world, float celAng, float partialTicks, float insideVoid) {
+		GlStateManager._disableDepthTest();
 		float rain = 1.0F - world.getRainLevel(partialTicks);
 		float effCelAng = celAng;
 		if (celAng > 0.5) {
@@ -83,12 +73,12 @@ public class SkyblockSkyRenderer {
 		ms.pushPose();
 		ms.mulPose(new Quaternionf().rotateAxis(VecHelper.toRadians(90), 0.5F, 0.5F, 0F));
 		for (int p = 0; p < planetTextures.length; p++) {
-			VertexConsumer consumer = bufferSource.getBuffer(celestialRenderType(planetTextures[p]));
+			VertexConsumer consumer = bufferSource.getBuffer(RenderTypes.entityTranslucent(planetTextures[p]));
 			Matrix4f mat = ms.last().pose();
-			consumer.addVertex(mat, -scale, 100, -scale).setUv(0.0F, 0.0F).setColor(planetColor);
-			consumer.addVertex(mat, scale, 100, -scale).setUv(1.0F, 0.0F).setColor(planetColor);
-			consumer.addVertex(mat, scale, 100, scale).setUv(1.0F, 1.0F).setColor(planetColor);
-			consumer.addVertex(mat, -scale, 100, scale).setUv(0.0F, 1.0F).setColor(planetColor);
+			consumer.addVertex(mat, -scale, 100, -scale).setUv(0.0F, 0.0F).setColor(planetColor).setOverlay(OverlayTexture.NO_OVERLAY).setLight(LightTexture.FULL_BRIGHT).setNormal(0, 1, 0);
+			consumer.addVertex(mat, scale, 100, -scale).setUv(1.0F, 0.0F).setColor(planetColor).setOverlay(OverlayTexture.NO_OVERLAY).setLight(LightTexture.FULL_BRIGHT).setNormal(0, 1, 0);
+			consumer.addVertex(mat, scale, 100, scale).setUv(1.0F, 1.0F).setColor(planetColor).setOverlay(OverlayTexture.NO_OVERLAY).setLight(LightTexture.FULL_BRIGHT).setNormal(0, 1, 0);
+			consumer.addVertex(mat, -scale, 100, scale).setUv(0.0F, 1.0F).setColor(planetColor).setOverlay(OverlayTexture.NO_OVERLAY).setLight(LightTexture.FULL_BRIGHT).setNormal(0, 1, 0);
 
 			switch (p) {
 				case 0 -> {
@@ -140,7 +130,7 @@ public class SkyblockSkyRenderer {
 			if (p == 1) rayColor = ARGB.color((int) (a * 255), 255, 102, 102);
 			if (p == 2) rayColor = ARGB.color((int) (a * 255), 102, 255, 178);
 
-			VertexConsumer consumer = bufferSource.getBuffer(celestialRenderType(textureSkybox));
+			VertexConsumer consumer = bufferSource.getBuffer(RenderTypes.entityTranslucent(textureSkybox));
 			Matrix4f mat = ms.last().pose();
 			for (int i = 0; i < angles; i++) {
 				int j = i;
@@ -153,11 +143,11 @@ public class SkyblockSkyRenderer {
 				float ut = ang * uPer;
 
 				if (i % 2 == 0) {
-					consumer.addVertex(mat, xp, yo + y0 + y, zp).setUv(ut, 1F).setColor(rayColor);
-					consumer.addVertex(mat, xp, yo + y0, zp).setUv(ut, 0).setColor(rayColor);
+					consumer.addVertex(mat, xp, yo + y0 + y, zp).setUv(ut, 1F).setColor(rayColor).setOverlay(OverlayTexture.NO_OVERLAY).setLight(LightTexture.FULL_BRIGHT).setNormal(0, 1, 0);
+					consumer.addVertex(mat, xp, yo + y0, zp).setUv(ut, 0).setColor(rayColor).setOverlay(OverlayTexture.NO_OVERLAY).setLight(LightTexture.FULL_BRIGHT).setNormal(0, 1, 0);
 				} else {
-					consumer.addVertex(mat, xp, yo + y0, zp).setUv(ut, 0).setColor(rayColor);
-					consumer.addVertex(mat, xp, yo + y0 + y, zp).setUv(ut, 1F).setColor(rayColor);
+					consumer.addVertex(mat, xp, yo + y0, zp).setUv(ut, 0).setColor(rayColor).setOverlay(OverlayTexture.NO_OVERLAY).setLight(LightTexture.FULL_BRIGHT).setNormal(0, 1, 0);
+					consumer.addVertex(mat, xp, yo + y0 + y, zp).setUv(ut, 1F).setColor(rayColor).setOverlay(OverlayTexture.NO_OVERLAY).setLight(LightTexture.FULL_BRIGHT).setNormal(0, 1, 0);
 				}
 			}
 
@@ -194,7 +184,7 @@ public class SkyblockSkyRenderer {
 		ms.mulPose(VecHelper.rotateY(angle1));
 		ms.mulPose(VecHelper.rotateZ(angle2));
 
-		VertexConsumer consumer = bufferSource.getBuffer(celestialRenderType(textureRainbow));
+		VertexConsumer consumer = bufferSource.getBuffer(RenderTypes.entityTranslucent(textureRainbow));
 		Matrix4f mat = ms.last().pose();
 		for (int i = 0; i < angles; i++) {
 			int j = i;
@@ -206,11 +196,11 @@ public class SkyblockSkyRenderer {
 			float ut = ang * uPer;
 
 			if (i % 2 == 0) {
-				consumer.addVertex(mat, xp, y0 + y, zp).setUv(ut, 1F).setColor(rainbowColor);
-				consumer.addVertex(mat, xp, y0, zp).setUv(ut, 0).setColor(rainbowColor);
+				consumer.addVertex(mat, xp, y0 + y, zp).setUv(ut, 1F).setColor(rainbowColor).setOverlay(OverlayTexture.NO_OVERLAY).setLight(LightTexture.FULL_BRIGHT).setNormal(0, 1, 0);
+				consumer.addVertex(mat, xp, y0, zp).setUv(ut, 0).setColor(rainbowColor).setOverlay(OverlayTexture.NO_OVERLAY).setLight(LightTexture.FULL_BRIGHT).setNormal(0, 1, 0);
 			} else {
-				consumer.addVertex(mat, xp, y0, zp).setUv(ut, 0).setColor(rainbowColor);
-				consumer.addVertex(mat, xp, y0 + y, zp).setUv(ut, 1F).setColor(rainbowColor);
+				consumer.addVertex(mat, xp, y0, zp).setUv(ut, 0).setColor(rainbowColor).setOverlay(OverlayTexture.NO_OVERLAY).setLight(LightTexture.FULL_BRIGHT).setNormal(0, 1, 0);
+				consumer.addVertex(mat, xp, y0 + y, zp).setUv(ut, 1F).setColor(rainbowColor).setOverlay(OverlayTexture.NO_OVERLAY).setLight(LightTexture.FULL_BRIGHT).setNormal(0, 1, 0);
 			}
 		}
 		ms.popPose();
