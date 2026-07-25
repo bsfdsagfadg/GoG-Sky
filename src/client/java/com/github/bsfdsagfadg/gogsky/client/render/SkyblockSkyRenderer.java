@@ -70,7 +70,7 @@ public class SkyblockSkyRenderer {
 		ms.pushPose();
 		ms.mulPose(new Quaternionf().rotateAxis(VecHelper.toRadians(90), 0.5F, 0.5F, 0F));
 		for (int p = 0; p < planetTextures.length; p++) {
-			VertexConsumer consumer = bufferSource.getBuffer(RenderType.celestial(planetTextures[p]));
+			VertexConsumer consumer = bufferSource.getBuffer(RenderType.entityTranslucent(planetTextures[p]));
 			Matrix4f mat = ms.last().pose();
 			consumer.addVertex(mat, -scale, 100, -scale).setUv(0.0F, 0.0F).setColor(planetColor);
 			consumer.addVertex(mat, scale, 100, -scale).setUv(1.0F, 0.0F).setColor(planetColor);
@@ -127,7 +127,7 @@ public class SkyblockSkyRenderer {
 			if (p == 1) rayColor = ARGB.color((int) (a * 255), 255, 102, 102);
 			if (p == 2) rayColor = ARGB.color((int) (a * 255), 102, 255, 178);
 
-			VertexConsumer consumer = bufferSource.getBuffer(RenderType.celestial(textureSkybox));
+			VertexConsumer consumer = bufferSource.getBuffer(RenderType.entityTranslucent(textureSkybox));
 			Matrix4f mat = ms.last().pose();
 			for (int i = 0; i < angles; i++) {
 				int j = i;
@@ -181,7 +181,7 @@ public class SkyblockSkyRenderer {
 		ms.mulPose(VecHelper.rotateY(angle1));
 		ms.mulPose(VecHelper.rotateZ(angle2));
 
-		VertexConsumer consumer = bufferSource.getBuffer(RenderType.celestial(textureRainbow));
+		VertexConsumer consumer = bufferSource.getBuffer(RenderType.entityTranslucent(textureRainbow));
 		Matrix4f mat = ms.last().pose();
 		for (int i = 0; i < angles; i++) {
 			int j = i;
