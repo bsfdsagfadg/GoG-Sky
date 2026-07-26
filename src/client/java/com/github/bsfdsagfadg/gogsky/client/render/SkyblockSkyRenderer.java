@@ -73,7 +73,7 @@ public class SkyblockSkyRenderer {
 		ms.pushPose();
 		ms.mulPose(new Quaternionf().rotateAxis(VecHelper.toRadians(90), 0.5F, 0.5F, 0F));
 		for (int p = 0; p < planetTextures.length; p++) {
-			RenderType renderType = SkyblockSkyRenderer.getPlanetRenderType(planetTextures[p]);
+			RenderType renderType = SkyblockSkyRenderer.getCustomRenderType(planetTextures[p]);
 			VertexConsumer consumer = bufferSource.getBuffer(renderType);
 			Matrix4f mat = ms.last().pose();
 			consumer.addVertex(mat, -scale, 100, -scale).setUv(0.0F, 0.0F).setColor(planetColor);
@@ -131,7 +131,7 @@ public class SkyblockSkyRenderer {
 			if (p == 1) rayColor = ARGB.color((int) (a * 255), 255, 102, 102);
 			if (p == 2) rayColor = ARGB.color((int) (a * 255), 102, 255, 178);
 
-			VertexConsumer consumer = bufferSource.getBuffer(RenderTypes.eyes(textureSkybox));
+			VertexConsumer consumer = bufferSource.getBuffer(SkyblockSkyRenderer.getCustomRenderType(textureSkybox));
 			Matrix4f mat = ms.last().pose();
 			for (int i = 0; i < angles; i++) {
 				int j = i;
@@ -144,11 +144,11 @@ public class SkyblockSkyRenderer {
 				float ut = ang * uPer;
 
 				if (i % 2 == 0) {
-					consumer.addVertex(mat, xp, yo + y0 + y, zp).setUv(ut, 1F).setColor(rayColor).setOverlay(OverlayTexture.NO_OVERLAY).setLight(LightTexture.FULL_BRIGHT).setNormal(0, 1, 0);
-					consumer.addVertex(mat, xp, yo + y0, zp).setUv(ut, 0).setColor(rayColor).setOverlay(OverlayTexture.NO_OVERLAY).setLight(LightTexture.FULL_BRIGHT).setNormal(0, 1, 0);
+					consumer.addVertex(mat, xp, yo + y0 + y, zp).setUv(ut, 1F).setColor(rayColor);
+					consumer.addVertex(mat, xp, yo + y0, zp).setUv(ut, 0).setColor(rayColor);
 				} else {
-					consumer.addVertex(mat, xp, yo + y0, zp).setUv(ut, 0).setColor(rayColor).setOverlay(OverlayTexture.NO_OVERLAY).setLight(LightTexture.FULL_BRIGHT).setNormal(0, 1, 0);
-					consumer.addVertex(mat, xp, yo + y0 + y, zp).setUv(ut, 1F).setColor(rayColor).setOverlay(OverlayTexture.NO_OVERLAY).setLight(LightTexture.FULL_BRIGHT).setNormal(0, 1, 0);
+					consumer.addVertex(mat, xp, yo + y0, zp).setUv(ut, 0).setColor(rayColor);
+					consumer.addVertex(mat, xp, yo + y0 + y, zp).setUv(ut, 1F).setColor(rayColor);
 				}
 			}
 
@@ -185,7 +185,7 @@ public class SkyblockSkyRenderer {
 		ms.mulPose(VecHelper.rotateY(angle1));
 		ms.mulPose(VecHelper.rotateZ(angle2));
 
-		VertexConsumer consumer = bufferSource.getBuffer(RenderTypes.eyes(textureRainbow));
+		VertexConsumer consumer = bufferSource.getBuffer(SkyblockSkyRenderer.getCustomRenderType(textureRainbow));
 		Matrix4f mat = ms.last().pose();
 		for (int i = 0; i < angles; i++) {
 			int j = i;
@@ -197,11 +197,11 @@ public class SkyblockSkyRenderer {
 			float ut = ang * uPer;
 
 			if (i % 2 == 0) {
-				consumer.addVertex(mat, xp, y0 + y, zp).setUv(ut, 1F).setColor(rainbowColor).setOverlay(OverlayTexture.NO_OVERLAY).setLight(LightTexture.FULL_BRIGHT).setNormal(0, 1, 0);
-				consumer.addVertex(mat, xp, y0, zp).setUv(ut, 0).setColor(rainbowColor).setOverlay(OverlayTexture.NO_OVERLAY).setLight(LightTexture.FULL_BRIGHT).setNormal(0, 1, 0);
+				consumer.addVertex(mat, xp, y0 + y, zp).setUv(ut, 1F).setColor(rainbowColor);
+				consumer.addVertex(mat, xp, y0, zp).setUv(ut, 0).setColor(rainbowColor);
 			} else {
-				consumer.addVertex(mat, xp, y0, zp).setUv(ut, 0).setColor(rainbowColor).setOverlay(OverlayTexture.NO_OVERLAY).setLight(LightTexture.FULL_BRIGHT).setNormal(0, 1, 0);
-				consumer.addVertex(mat, xp, y0 + y, zp).setUv(ut, 1F).setColor(rainbowColor).setOverlay(OverlayTexture.NO_OVERLAY).setLight(LightTexture.FULL_BRIGHT).setNormal(0, 1, 0);
+				consumer.addVertex(mat, xp, y0, zp).setUv(ut, 0).setColor(rainbowColor);
+				consumer.addVertex(mat, xp, y0 + y, zp).setUv(ut, 1F).setColor(rainbowColor);
 			}
 		}
 		ms.popPose();
@@ -237,6 +237,18 @@ public class SkyblockSkyRenderer {
 	/**
 	 * 绘制单层星星
 	 */
+
+	private static final Map<Identifier, RenderType> CUSTOM_RENDER_TYPES = new HashMap<>();
+
+	private static RenderType getCustomRenderType(Identifier texture) {
+		return CUSTOM_RENDER_TYPES.computeIfAbsent(texture, id ->
+			RenderType.create("gog_celestial",
+				RenderSetup.builder(RenderPipelines.END_SKY)
+					.withTexture("Sampler0", id)
+					.createRenderSetup()
+			)
+		);
+	}
 	private static void drawStarLayer(GpuBuffer starBuffer, GpuBuffer quadIndices, int starIndexCount, RenderSystem.AutoStorageIndexBuffer quadIndexBuffer, PoseStack ms, Quaternionf rotation, Vector4f color, String name) {
 		Matrix4fStack matrix4fStack = RenderSystem.getModelViewStack();
 		matrix4fStack.pushMatrix();
@@ -262,15 +274,4 @@ public class SkyblockSkyRenderer {
 		matrix4fStack.popMatrix();
 	}
 
-	private static final Map<Identifier, RenderType> PLANET_RENDER_TYPES = new HashMap<>();
-
-	private static RenderType getPlanetRenderType(Identifier texture) {
-		return PLANET_RENDER_TYPES.computeIfAbsent(texture, id ->
-			RenderType.create("gog_planet",
-				RenderSetup.builder(RenderPipelines.CELESTIAL)
-					.withTexture("Sampler0", id)
-					.createRenderSetup()
-			)
-		);
-	}
 }
