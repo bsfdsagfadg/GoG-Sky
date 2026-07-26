@@ -108,6 +108,7 @@ public class SkyblockSkyRenderer {
 		a = lowA;
 		int rayBaseColor = ARGB.white(a);
 		ms.pushPose();
+		ms.translate(0, -1, 0);
 		ms.mulPose(VecHelper.rotateX(220));
 		
 		int angles = 90;
