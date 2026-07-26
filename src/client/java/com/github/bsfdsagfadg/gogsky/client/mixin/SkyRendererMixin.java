@@ -30,7 +30,7 @@ public abstract class SkyRendererMixin {
     private void onRenderExtra(PoseStack poseStack, float f, int i, float g, float h, CallbackInfo ci) {
         Minecraft mc = Minecraft.getInstance();
         if (GogSkyConfig.isEnabled(mc.level)) {
-            MultiBufferSource.BufferSource bufferSource = MultiBufferSource.immediate(new com.mojang.blaze3d.vertex.ByteBufferBuilder(256));
+            MultiBufferSource.BufferSource bufferSource = mc.renderBuffers().bufferSource();
             SkyblockSkyRenderer.renderExtra(poseStack, bufferSource, mc.level, f, 0);
             bufferSource.endBatch();
         }
