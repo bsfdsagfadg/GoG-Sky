@@ -15,6 +15,9 @@ import org.spongepowered.asm.mixin.Shadow;
 import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
+/**
+ * 核心 Mixin：将自定义天空效果注入到 1.21.10 的 SkyRenderer 中
+ */
 
 @Mixin(SkyRenderer.class)
 public abstract class SkyRendererMixin {

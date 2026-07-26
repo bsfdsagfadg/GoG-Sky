@@ -31,11 +31,9 @@ import java.util.Random;
 /**
  * 水晶花园天空渲染器
  * 适配自 Botania (植物魔法) 的 Garden of Glass 天空效果。
- * 针对 Minecraft 1.21.8 的 Blaze3D Next 渲染引擎进行了重写，使用了现代的缓冲渲染 API。
+ * 针对 Minecraft 1.21.10 的 Blaze3D Next 渲染引擎进行了重写，使用了现代的缓冲渲染 API。
  */
 public class SkyblockSkyRenderer {
-
-
 	private static final ResourceLocation textureSkybox = ResourceLocation.fromNamespaceAndPath("gog-sky", "textures/environment/skybox.png");
 	private static final ResourceLocation textureRainbow = ResourceLocation.fromNamespaceAndPath("gog-sky", "textures/environment/rainbow.png");
 	private static final ResourceLocation[] planetTextures = new ResourceLocation[] {
@@ -252,17 +250,13 @@ public class SkyblockSkyRenderer {
 		
 		RenderPass renderPass = RenderSystem.getDevice().createCommandEncoder().createRenderPass(() -> name, gpuTextureView, OptionalInt.empty(), gpuTextureView2, OptionalDouble.empty());
 
-		try {
+		try (renderPass) {
 			renderPass.setPipeline(renderPipeline);
 			RenderSystem.bindDefaultUniforms(renderPass);
 			renderPass.setUniform("DynamicTransforms", gpuBufferSlice);
 			renderPass.setVertexBuffer(0, starBuffer);
 			renderPass.setIndexBuffer(starIndices, starIndexBuffer.type());
 			renderPass.drawIndexed(0, 0, starIndexCount, 1);
-		} finally {
-			if (renderPass != null) {
-				renderPass.close();
-			}
 		}
 		matrix4fStack.popMatrix();
 	}
