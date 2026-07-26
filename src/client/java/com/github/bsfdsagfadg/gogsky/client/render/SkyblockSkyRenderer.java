@@ -15,6 +15,8 @@ import net.minecraft.client.renderer.LightTexture;
 import net.minecraft.client.renderer.MultiBufferSource;
 import net.minecraft.client.renderer.RenderPipelines;
 import net.minecraft.client.renderer.texture.OverlayTexture;
+import net.minecraft.client.renderer.rendertype.RenderType;
+import net.minecraft.client.renderer.rendertype.RenderSetup;
 import net.minecraft.client.renderer.rendertype.RenderTypes;
 import net.minecraft.resources.Identifier;
 import net.minecraft.util.ARGB;
@@ -27,6 +29,8 @@ import org.joml.Vector4f;
 import java.util.OptionalDouble;
 import java.util.OptionalInt;
 import java.util.Random;
+import java.util.Map;
+import java.util.HashMap;
 
 /**
  * 水晶花园天空渲染器
@@ -69,12 +73,13 @@ public class SkyblockSkyRenderer {
 		ms.pushPose();
 		ms.mulPose(new Quaternionf().rotateAxis(VecHelper.toRadians(90), 0.5F, 0.5F, 0F));
 		for (int p = 0; p < planetTextures.length; p++) {
-			VertexConsumer consumer = bufferSource.getBuffer(RenderTypes.eyes(planetTextures[p]));
+			RenderType renderType = SkyblockSkyRenderer.getPlanetRenderType(planetTextures[p]);
+			VertexConsumer consumer = bufferSource.getBuffer(renderType);
 			Matrix4f mat = ms.last().pose();
-			consumer.addVertex(mat, -scale, 100, -scale).setUv(0.0F, 0.0F).setColor(planetColor).setOverlay(OverlayTexture.NO_OVERLAY).setLight(LightTexture.FULL_BRIGHT).setNormal(0, 1, 0);
-			consumer.addVertex(mat, scale, 100, -scale).setUv(1.0F, 0.0F).setColor(planetColor).setOverlay(OverlayTexture.NO_OVERLAY).setLight(LightTexture.FULL_BRIGHT).setNormal(0, 1, 0);
-			consumer.addVertex(mat, scale, 100, scale).setUv(1.0F, 1.0F).setColor(planetColor).setOverlay(OverlayTexture.NO_OVERLAY).setLight(LightTexture.FULL_BRIGHT).setNormal(0, 1, 0);
-			consumer.addVertex(mat, -scale, 100, scale).setUv(0.0F, 1.0F).setColor(planetColor).setOverlay(OverlayTexture.NO_OVERLAY).setLight(LightTexture.FULL_BRIGHT).setNormal(0, 1, 0);
+			consumer.addVertex(mat, -scale, 100, -scale).setUv(0.0F, 0.0F).setColor(planetColor);
+			consumer.addVertex(mat, scale, 100, -scale).setUv(1.0F, 0.0F).setColor(planetColor);
+			consumer.addVertex(mat, scale, 100, scale).setUv(1.0F, 1.0F).setColor(planetColor);
+			consumer.addVertex(mat, -scale, 100, scale).setUv(0.0F, 1.0F).setColor(planetColor);
 
 			switch (p) {
 				case 0 -> {
@@ -255,5 +260,17 @@ public class SkyblockSkyRenderer {
 			renderPass.drawIndexed(0, 0, starIndexCount, 1);
 		}
 		matrix4fStack.popMatrix();
+	}
+
+	private static final Map<Identifier, RenderType> PLANET_RENDER_TYPES = new HashMap<>();
+
+	private static RenderType getPlanetRenderType(Identifier texture) {
+		return PLANET_RENDER_TYPES.computeIfAbsent(texture, id ->
+			RenderType.create("gog_planet",
+				RenderSetup.builder(RenderPipelines.CELESTIAL)
+					.withTexture("Sampler0", id)
+					.createRenderSetup()
+			)
+		);
 	}
 }
