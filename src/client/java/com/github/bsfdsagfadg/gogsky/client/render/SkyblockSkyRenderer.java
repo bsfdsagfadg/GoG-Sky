@@ -57,8 +57,6 @@ public class SkyblockSkyRenderer {
 	 * @param insideVoid 虚空深度透明度修正
 	 */
 	public static void renderExtra(PoseStack ms, MultiBufferSource bufferSource, ClientLevel world, float partialTicks, float insideVoid) {
-		com.mojang.blaze3d.opengl.GlStateManager._disableDepthTest();
-		com.mojang.blaze3d.opengl.GlStateManager._depthMask(false);
 		float rain = 1.0F - world.getRainLevel(partialTicks);
 		float celAng = world.getTimeOfDay(partialTicks);
 		float effCelAng = celAng;
@@ -75,7 +73,7 @@ public class SkyblockSkyRenderer {
 		ms.pushPose();
 		ms.mulPose(new Quaternionf().rotateAxis(VecHelper.toRadians(90), 0.5F, 0.5F, 0F));
 		for (int p = 0; p < planetTextures.length; p++) {
-			VertexConsumer consumer = bufferSource.getBuffer(RenderType.entityTranslucent(planetTextures[p]));
+			VertexConsumer consumer = bufferSource.getBuffer(RenderType.eyes(planetTextures[p]));
 			Matrix4f mat = ms.last().pose();
 			consumer.addVertex(mat, -scale, 100, -scale).setUv(0.0F, 0.0F).setColor(planetColor).setOverlay(OverlayTexture.NO_OVERLAY).setLight(LightTexture.FULL_BRIGHT).setNormal(0, 1, 0);
 			consumer.addVertex(mat, scale, 100, -scale).setUv(1.0F, 0.0F).setColor(planetColor).setOverlay(OverlayTexture.NO_OVERLAY).setLight(LightTexture.FULL_BRIGHT).setNormal(0, 1, 0);
@@ -132,7 +130,7 @@ public class SkyblockSkyRenderer {
 			if (p == 1) rayColor = ARGB.color((int) (a * 255), 255, 102, 102);
 			if (p == 2) rayColor = ARGB.color((int) (a * 255), 102, 255, 178);
 
-			VertexConsumer consumer = bufferSource.getBuffer(RenderType.entityTranslucent(textureSkybox));
+			VertexConsumer consumer = bufferSource.getBuffer(RenderType.eyes(textureSkybox));
 			Matrix4f mat = ms.last().pose();
 			for (int i = 0; i < angles; i++) {
 				int j = i;
@@ -186,7 +184,7 @@ public class SkyblockSkyRenderer {
 		ms.mulPose(VecHelper.rotateY(angle1));
 		ms.mulPose(VecHelper.rotateZ(angle2));
 
-		VertexConsumer consumer = bufferSource.getBuffer(RenderType.entityTranslucent(textureRainbow));
+		VertexConsumer consumer = bufferSource.getBuffer(RenderType.eyes(textureRainbow));
 		Matrix4f mat = ms.last().pose();
 		for (int i = 0; i < angles; i++) {
 			int j = i;
@@ -207,8 +205,6 @@ public class SkyblockSkyRenderer {
 			}
 		}
 		ms.popPose();
-		com.mojang.blaze3d.opengl.GlStateManager._depthMask(true);
-		com.mojang.blaze3d.opengl.GlStateManager._enableDepthTest();
 	}
 
 	/**
