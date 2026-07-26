@@ -11,9 +11,9 @@ import com.mojang.blaze3d.vertex.PoseStack;
 import com.mojang.blaze3d.vertex.VertexConsumer;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.multiplayer.ClientLevel;
+import net.minecraft.client.renderer.LightTexture;
 import net.minecraft.client.renderer.MultiBufferSource;
 import net.minecraft.client.renderer.RenderPipelines;
-import net.minecraft.client.renderer.LightTexture;
 import net.minecraft.client.renderer.texture.OverlayTexture;
 import net.minecraft.client.renderer.rendertype.RenderTypes;
 import net.minecraft.resources.Identifier;
@@ -33,8 +33,6 @@ import java.util.Random;
  * 适配自 Botania (植物魔法) 的 Garden of Glass 天空效果。
  */
 public class SkyblockSkyRenderer {
-
-
 	private static final Identifier textureSkybox = Identifier.fromNamespaceAndPath("gog-sky", "textures/environment/skybox.png");
 	private static final Identifier textureRainbow = Identifier.fromNamespaceAndPath("gog-sky", "textures/environment/rainbow.png");
 	private static final Identifier[] planetTextures = new Identifier[] {
@@ -71,7 +69,7 @@ public class SkyblockSkyRenderer {
 		ms.pushPose();
 		ms.mulPose(new Quaternionf().rotateAxis(VecHelper.toRadians(90), 0.5F, 0.5F, 0F));
 		for (int p = 0; p < planetTextures.length; p++) {
-		VertexConsumer consumer = bufferSource.getBuffer(RenderTypes.eyes(planetTextures[p]));
+			VertexConsumer consumer = bufferSource.getBuffer(RenderTypes.eyes(planetTextures[p]));
 			Matrix4f mat = ms.last().pose();
 			consumer.addVertex(mat, -scale, 100, -scale).setUv(0.0F, 0.0F).setColor(planetColor).setOverlay(OverlayTexture.NO_OVERLAY).setLight(LightTexture.FULL_BRIGHT).setNormal(0, 1, 0);
 			consumer.addVertex(mat, scale, 100, -scale).setUv(1.0F, 0.0F).setColor(planetColor).setOverlay(OverlayTexture.NO_OVERLAY).setLight(LightTexture.FULL_BRIGHT).setNormal(0, 1, 0);
@@ -248,17 +246,13 @@ public class SkyblockSkyRenderer {
 		
 		RenderPass renderPass = RenderSystem.getDevice().createCommandEncoder().createRenderPass(() -> name, gpuTextureView, OptionalInt.empty(), gpuTextureView2, OptionalDouble.empty());
 
-		try {
+		try (renderPass) {
 			renderPass.setPipeline(renderPipeline);
 			RenderSystem.bindDefaultUniforms(renderPass);
 			renderPass.setUniform("DynamicTransforms", gpuBufferSlice);
 			renderPass.setVertexBuffer(0, starBuffer);
 			renderPass.setIndexBuffer(quadIndices, quadIndexBuffer.type());
 			renderPass.drawIndexed(0, 0, starIndexCount, 1);
-		} finally {
-			if (renderPass != null) {
-				renderPass.close();
-			}
 		}
 		matrix4fStack.popMatrix();
 	}
