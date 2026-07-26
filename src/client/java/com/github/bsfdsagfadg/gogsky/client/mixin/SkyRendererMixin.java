@@ -18,7 +18,7 @@ import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 
 /**
- * 核心 Mixin：将自定义天空效果注入到 1.21.8 的 SkyRenderer 中
+ * 核心 Mixin：将自定义天空效果注入到 1.21.9 的 SkyRenderer 中
  */
 @Mixin(SkyRenderer.class)
 public abstract class SkyRendererMixin {
@@ -29,12 +29,14 @@ public abstract class SkyRendererMixin {
 
     /**
      * 在渲染太阳、月亮和星星之前注入额外的大气效果（行星、极光、彩虹）
+     */
     @Inject(method = "renderSunMoonAndStars", at = @At("HEAD"))
     private void onRenderExtra(PoseStack poseStack, float f, int i, float g, float h, CallbackInfo ci) {
         Minecraft mc = Minecraft.getInstance();
         if (GogSkyConfig.isEnabled(mc.level)) {
-            MultiBufferSource.BufferSource bufferSource = MultiBufferSource.immediate(Tesselator.getInstance().buffer);
+            MultiBufferSource.BufferSource bufferSource = mc.renderBuffers().bufferSource();
             SkyblockSkyRenderer.renderExtra(poseStack, bufferSource, mc.level, f, 0);
+            bufferSource.endBatch();
         }
     }
 
