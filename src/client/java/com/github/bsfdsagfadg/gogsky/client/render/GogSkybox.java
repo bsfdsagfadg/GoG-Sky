@@ -26,6 +26,8 @@ import me.flashyreese.mods.nuit.components.Properties;
 import me.flashyreese.mods.nuit.render.NuitRenderBackend;
 import me.flashyreese.mods.nuit.render.NuitRenderPipelines;
 import me.flashyreese.mods.nuit.skybox.AbstractSkybox;
+
+import com.github.bsfdsagfadg.gogsky.client.render.StarColorHelper;
 import net.minecraft.client.Camera;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.multiplayer.ClientLevel;
@@ -322,24 +324,24 @@ public class GogSkybox extends AbstractSkybox implements SkyboxTextureProvider {
 
         // Y-axis layers — Botania white/cyan/pink tint via the mixin
         ps.pushPose(); ps.mulPose(new Quaternionf().rotateY(toRad(tDeg * 3F)));
-        com.github.bsfdsagfadg.gogsky.client.mixin.SkyRendererMixin.gogSetStarColor(1F, 1F, 1F);
+        StarColorHelper.set(1F, 1F, 1F);
         context.renderStars(starAlpha, ps); ps.popPose();
         ps.pushPose(); ps.mulPose(new Quaternionf().rotateY(toRad(tDeg)));
-        com.github.bsfdsagfadg.gogsky.client.mixin.SkyRendererMixin.gogSetStarColor(0.5F, 1F, 1F);
+        StarColorHelper.set(0.5F, 1F, 1F);
         context.renderStars(starAlpha, ps); ps.popPose();
         ps.pushPose(); ps.mulPose(new Quaternionf().rotateY(toRad(tDeg * 2F)));
-        com.github.bsfdsagfadg.gogsky.client.mixin.SkyRendererMixin.gogSetStarColor(1F, 0.75F, 0.75F);
+        StarColorHelper.set(1F, 0.75F, 0.75F);
         context.renderStars(starAlpha, ps); ps.popPose();
 
         // Z-axis layers (dimmed)
         ps.pushPose(); ps.mulPose(new Quaternionf().rotateZ(toRad(tDeg * 3F)));
-        com.github.bsfdsagfadg.gogsky.client.mixin.SkyRendererMixin.gogSetStarColor(1F, 1F, 1F);
+        StarColorHelper.set(1F, 1F, 1F);
         context.renderStars(starAlpha * 0.25F, ps); ps.popPose();
         ps.pushPose(); ps.mulPose(new Quaternionf().rotateZ(toRad(tDeg)));
-        com.github.bsfdsagfadg.gogsky.client.mixin.SkyRendererMixin.gogSetStarColor(0.5F, 1F, 1F);
+        StarColorHelper.set(0.5F, 1F, 1F);
         context.renderStars(starAlpha * 0.25F, ps); ps.popPose();
         ps.pushPose(); ps.mulPose(new Quaternionf().rotateZ(toRad(tDeg * 2F)));
-        com.github.bsfdsagfadg.gogsky.client.mixin.SkyRendererMixin.gogSetStarColor(1F, 0.75F, 0.75F);
+        StarColorHelper.set(1F, 0.75F, 0.75F);
         context.renderStars(starAlpha * 0.25F, ps); ps.popPose();
     }
 
