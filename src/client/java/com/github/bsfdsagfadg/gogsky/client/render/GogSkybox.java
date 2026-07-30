@@ -99,8 +99,10 @@ public class GogSkybox extends AbstractSkybox implements SkyboxTextureProvider {
         Camera camera = context.camera();
 
         float rain = 1.0F - level.getRainLevel(tickDelta);
-        float celAng = (float) camera.attributeProbe().getValue(
+        // SUN_ANGLE returns degrees (0-360), normalize to 0.0-1.0 like Botania's getTimeOfDay
+        float celAngDeg = (float) camera.attributeProbe().getValue(
                 EnvironmentAttributes.SUN_ANGLE, tickDelta);
+        float celAng = celAngDeg / 360.0F;
         float effCelAng = celAng > 0.5F ? 0.5F - (celAng - 0.5F) : celAng;
 
         // Each element renders independently into the sky model view stack
@@ -183,9 +185,10 @@ public class GogSkybox extends AbstractSkybox implements SkyboxTextureProvider {
 
                 Vector4f color;
                 switch (p) {
-                    case 0 -> color = new Vector4f(1.0F, 0.4F * a, 0.4F * a, a);
-                    case 1 -> color = new Vector4f(0.4F * a, 1.0F, 0.7F * a, a);
-                    default -> color = new Vector4f(a, a, a, a);
+                    // Botania applies color as setShaderColor(R,G,B,alpha), RGB fixed, alpha only
+                    case 0 -> color = new Vector4f(1.0F, 0.4F, 0.4F, a);
+                    case 1 -> color = new Vector4f(0.4F, 1.0F, 0.7F, a);
+                    default -> color = new Vector4f(1.0F, 1.0F, 1.0F, a);
                 }
                 GpuBufferSlice transforms = NuitRenderBackend.createDynamicTransforms(new Matrix4f(stack), color);
 
@@ -294,11 +297,11 @@ public class GogSkybox extends AbstractSkybox implements SkyboxTextureProvider {
                 float ut = ang * uPer;
 
                 if (i % 2 == 0) {
-                    builder.addVertex(xp, y0 + y0 + y, zp).setUv(ut, 1.0F);
-                    builder.addVertex(xp, y0 + y0, zp).setUv(ut, 0.0F);
+                    builder.addVertex(xp, y0 + y, zp).setUv(ut, 1.0F);
+                    builder.addVertex(xp, y0, zp).setUv(ut, 0.0F);
                 } else {
-                    builder.addVertex(xp, y0 + y0, zp).setUv(ut, 0.0F);
-                    builder.addVertex(xp, y0 + y0 + y, zp).setUv(ut, 1.0F);
+                    builder.addVertex(xp, y0, zp).setUv(ut, 0.0F);
+                    builder.addVertex(xp, y0 + y, zp).setUv(ut, 1.0F);
                 }
             }
             NuitRenderBackend.drawTextured(pipeline, builder.buildOrThrow(), transforms,
