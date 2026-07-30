@@ -3,7 +3,7 @@
 	"id": "gog-sky",
 	"version": "${version}",
 	"name": "GoG Sky",
-	"description": "A standalone port of the Garden of Glass skybox from Botania.",
+	"description": "A standalone port of the Garden of Glass skybox from Botania, powered by Nuit.",
 	"authors": [
 		"bsfdsagfadg",
 		"Vazkii (Original Author)"
@@ -30,7 +30,8 @@
 		"fabricloader": ">=0.19.3",
 		"minecraft": "~1.21.11",
 		"java": ">=21",
-		"fabric-api": "*"
+		"fabric-api": "*",
+		"nuit": "*"
 	},
 	"suggests": {
 	}

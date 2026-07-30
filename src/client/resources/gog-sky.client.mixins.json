@@ -1,9 +1,9 @@
 {
 	"required": true,
+	"minVersion": "0.8",
 	"package": "com.github.bsfdsagfadg.gogsky.client.mixin",
 	"compatibilityLevel": "JAVA_21",
 	"client": [
-		"GameRendererMixin",
 		"SkyRendererMixin"
 	],
 	"injectors": {

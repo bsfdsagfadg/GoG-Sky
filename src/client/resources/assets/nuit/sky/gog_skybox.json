@@ -1,0 +1,23 @@
+{
+  "schemaVersion": 1,
+  "type": "gog-sky:gog_skybox",
+  "properties": {
+    "layer": 100,
+    "fade": {
+      "keyFrames": {
+        "0": 0.0,
+        "1000": 1.0,
+        "12000": 1.0,
+        "13000": 0.0
+      }
+    },
+    "fog": {
+      "showInDenseFog": true
+    }
+  },
+  "conditions": {
+    "skyboxes": {
+      "entries": ["minecraft:overworld"]
+    }
+  }
+}

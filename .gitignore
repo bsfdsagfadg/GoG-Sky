@@ -42,3 +42,6 @@ replay_*.log
 #lookme
 
 lookme/
+# dev submodules
+botania-git/
+nuit-git/

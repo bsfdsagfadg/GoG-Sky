@@ -1,63 +1,60 @@
 package com.github.bsfdsagfadg.gogsky.client.mixin;
 
-import com.github.bsfdsagfadg.gogsky.client.ClientTickHandler;
-import com.github.bsfdsagfadg.gogsky.client.GogSkyConfig;
-import com.github.bsfdsagfadg.gogsky.client.render.SkyblockSkyRenderer;
-import com.mojang.blaze3d.buffers.GpuBuffer;
-import com.mojang.blaze3d.systems.RenderSystem;
-import net.minecraft.client.Minecraft;
-import net.minecraft.client.renderer.MultiBufferSource;
-import net.minecraft.client.renderer.SkyRenderer;
 import com.mojang.blaze3d.vertex.PoseStack;
-import net.minecraft.world.level.MoonPhase;
-import org.spongepowered.asm.mixin.Final;
+import net.minecraft.client.renderer.SkyRenderer;
 import org.spongepowered.asm.mixin.Mixin;
-import org.spongepowered.asm.mixin.Shadow;
+import org.spongepowered.asm.mixin.Unique;
 import org.spongepowered.asm.mixin.injection.At;
-import org.spongepowered.asm.mixin.injection.Inject;
-import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
+import org.spongepowered.asm.mixin.injection.ModifyArg;
 
 /**
- * 核心 Mixin：将自定义天空效果注入到 1.21.11 的 SkyRenderer 中
+ * Mixins to SkyRenderer for GoG sky visual enhancements.
+ *
+ * Star coloring: SkyRenderer.renderStars creates Vector4f(b,b,b,b) for the
+ * DynamicUniforms color modulator. We redirect R/G/B channels to match the
+ * Botania multi-layer tint pattern (white, cyan, pink). GogSkybox sets the
+ * desired tint via gogSetStarColor() before each context.renderStars() call.
  */
 @Mixin(SkyRenderer.class)
-public abstract class SkyRendererMixin {
+public class SkyRendererMixin {
+    @Unique
+    private static float gogStarR = 1F;
+    @Unique
+    private static float gogStarG = 1F;
+    @Unique
+    private static float gogStarB = 1F;
 
-    @Shadow @Final private GpuBuffer starBuffer;
-    @Shadow @Final private RenderSystem.AutoStorageIndexBuffer quadIndices;
-    @Shadow private int starIndexCount;
-
-    @Inject(method = "renderSunMoonAndStars", at = @At("HEAD"))
-    private void onRenderSunMoonAndStars(PoseStack poseStack, float sunAngle, float moonAngle, float starAngle, MoonPhase moonPhase, float rainBrightness, float starBrightness, CallbackInfo ci) {
-        Minecraft mc = Minecraft.getInstance();
-        if (GogSkyConfig.isEnabled(mc.level)) {
-            MultiBufferSource.BufferSource bufferSource = mc.renderBuffers().bufferSource();
-            float celAng = sunAngle / (float) (2 * Math.PI); // sunAngle is radians, convert to 0-1
-            SkyblockSkyRenderer.renderExtra(poseStack, bufferSource, mc.level, celAng, ClientTickHandler.partialTicks, 0);
-            bufferSource.endBatch(); // Flush the rendering
-        }
+    /** Called by GogSkybox before each context.renderStars() call. */
+    public static void gogSetStarColor(float r, float g, float b) {
+        gogStarR = r;
+        gogStarG = g;
+        gogStarB = b;
     }
 
-    @Inject(method = "renderSunMoonAndStars", at = @At(value = "INVOKE", target = "Lnet/minecraft/client/renderer/SkyRenderer;renderStars(FLcom/mojang/blaze3d/vertex/PoseStack;)V"))
-    private void onRenderStars(PoseStack poseStack, float sunAngle, float moonAngle, float starAngle, MoonPhase moonPhase, float rainBrightness, float starBrightness, CallbackInfo ci) {
-        Minecraft mc = Minecraft.getInstance();
-        if (GogSkyConfig.isEnabled(mc.level)) {
-            GpuBuffer indices = this.quadIndices.getBuffer(this.starIndexCount);
-            SkyblockSkyRenderer.renderStars(this.starBuffer, indices, this.starIndexCount, this.quadIndices, poseStack, sunAngle / (float) (2 * Math.PI), ClientTickHandler.partialTicks);
-        }
+    @ModifyArg(
+            method = "renderStars",
+            at = @At(value = "INVOKE", target = "Lorg/joml/Vector4f;<init>(FFFF)V"),
+            index = 0
+    )
+    private float gogModifyStarR(float original) {
+        return original * gogStarR;
     }
 
-    @Inject(method = "renderSun", at = @At("HEAD"))
-    private void onRenderSun(float alpha, PoseStack poseStack, CallbackInfo ci) {
-        if (GogSkyConfig.isEnabled(Minecraft.getInstance().level)) {
-            poseStack.scale(2.0F, 1.0F, 2.0F);
-        }
+    @ModifyArg(
+            method = "renderStars",
+            at = @At(value = "INVOKE", target = "Lorg/joml/Vector4f;<init>(FFFF)V"),
+            index = 1
+    )
+    private float gogModifyStarG(float original) {
+        return original * gogStarG;
     }
 
-    @Inject(method = "renderMoon", at = @At("HEAD"))
-    private void onRenderMoon(MoonPhase moonPhase, float alpha, PoseStack poseStack, CallbackInfo ci) {
-        if (GogSkyConfig.isEnabled(Minecraft.getInstance().level)) {
-            poseStack.scale(1.5F, 1.0F, 1.5F);
-        }
+    @ModifyArg(
+            method = "renderStars",
+            at = @At(value = "INVOKE", target = "Lorg/joml/Vector4f;<init>(FFFF)V"),
+            index = 2
+    )
+    private float gogModifyStarB(float original) {
+        return original * gogStarB;
     }
 }
